@@ -472,12 +472,16 @@
         const steps = Math.max(1, Math.floor(dist/THRESHOLD));
         for (let i=1;i<=steps;i++){ const t=i/steps; addTrail(x0+dx*t,y0+dy*t); }
       }
-      window.addEventListener('pointerdown', (e)=>{ drawing=true; lastX=e.clientX; lastY=e.clientY; });
-      window.addEventListener('pointermove', (e)=>{ if(!drawing) return; const x=e.clientX, y=e.clientY;
-        if (Math.hypot(x-lastX,y-lastY) >= THRESHOLD){ lineTrail(lastX,lastY,x,y); lastX=x; lastY=y; } });
-      function stop(){ drawing=false; }
-      window.addEventListener('pointerup', stop); window.addEventListener('pointercancel', stop); window.addEventListener('blur', stop);
-    })();
+	window.addEventListener('pointermove', (e)=>{ 
+	  const x=e.clientX, y=e.clientY;
+	  if (Math.hypot(x-lastX,y-lastY) >= THRESHOLD){ 
+		lineTrail(lastX,lastY,x,y); 
+		lastX=x; lastY=y; 
+	  } else {
+		// 최초 좌표 갱신 (처음 마우스 움직였을 때)
+		lastX=x; lastY=y;
+	  }
+	});
 
     /* ========= 게임 리스트 렌더링 ========= */
     (function renderGames(){
