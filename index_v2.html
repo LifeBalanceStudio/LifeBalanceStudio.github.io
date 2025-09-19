@@ -60,20 +60,24 @@
     }
 
     /* 상단 타이틀 바 */
-    .topbar {
-      position: fixed;
-      inset: 0 0 auto 0;
-      display: flex;
-      justify-content: center; /* 가운데 정렬 유지 */
-      padding: 18px 12px;
-      z-index: 10;
-    }
+	.topbar{
+	  position: sticky;  /* fixed였던 부분 */
+	  top: 0;
+	  inset: unset;      /* 기존 inset 제거 */
+	  display: flex;
+	  justify-content: center;
+	  padding: 18px 12px;
+	  z-index: 10;
+	}
 
     /* 타이틀과 버튼을 겹치지 않게 묶는 래퍼 (가운데 정렬의 기준) */
-    .title-wrap{
-      position: relative; /* 내부 절대 위치 버튼 기준 */
-      display: inline-block; /* 내용 크기만큼 */
-    }
+	.title-wrap{
+	  position: relative;
+	  display: flex;              /* inline-block → flex */
+	  flex-direction: column;     /* 수직 스택 */
+	  align-items: center;        /* 가로 중앙 */
+	  gap: 12px;                  /* 제목과 버튼 간격 */
+	}
 
     .title {
       background: var(--panel);
@@ -90,36 +94,44 @@
     }
 
     /* 타이틀 우측에 겹치지 않고 붙는 버튼 */
-    .title-btn{
-      position: absolute;
-      top: 50%;
-      left: calc(100% + 30px); /* 타이틀 오른쪽에서 12px 띄우기 */
-      transform: translateY(-50%);
-      white-space: nowrap;
-      text-decoration: none;
-
-      background:#0f1222;
-      color: var(--fg);
-      font-family: "Press Start 2P", sans-serif;
-      font-size: 11px;
-      padding: 11px 10px;
-      box-shadow:
-        0 0 0 4px #0a0b14,
-        0 0 0 8px var(--accent),
-        0 0 0 12px #0a0b14,
-        0 6px 0 12px rgba(0,0,0,0.45);
-      display: inline-grid;
-      place-items: center;
-      user-select: none;
-    }
-    .title-btn:active{ transform: translateY(-50%) translateX(0) scale(0.98); }
+	.title-btn{
+	  position: static;           /* absolute → static */
+	  transform: none;            /* 중앙 정렬에 불필요 */
+	  white-space: nowrap;
+	  text-decoration: none;
+	  transition: transform 60ms ease, box-shadow 60ms ease;
+	  will-change: transform;
+	  
+	  background:#0f1222;
+	  color: var(--fg);
+	  font-family: "Press Start 2P", sans-serif;
+	  font-size: 11px;
+	  padding: 11px 10px;
+	  box-shadow:
+		0 0 0 4px #0a0b14,
+		0 0 0 8px var(--accent),
+		0 0 0 12px #0a0b14,
+		0 6px 0 12px rgba(0,0,0,0.45);
+	  display: inline-grid;
+	  place-items: center;
+	  user-select: none;
+	}
+	.title-btn:active{
+	  transform: translate(-1px, 2px) scale(0.985); /* 좌측(-) 아래(+) */
+	  box-shadow:
+		0 0 0 4px #0a0b14,
+		0 0 0 8px var(--accent),
+		0 0 0 12px #0a0b14,
+		0 3px 0 10px rgba(0,0,0,0.45); /* 살짝 눌린 느낌 */
+	}
     .title-btn:focus-visible{ outline:2px dashed var(--accent); outline-offset:4px; }
 
-    .page {
-      padding-top: 96px;
-      padding-left: var(--page-side);
-      padding-right: var(--page-side);
-    }
+	.page{
+	  /* 기존: padding-top: 96px; */
+	  padding-top: 24px;   /* 보기 좋은 상단 여백 정도만 */
+	  padding-left: var(--page-side);
+	  padding-right: var(--page-side);
+	}
 
     .hero {
       margin: var(--gap-from-title) auto 48px;
@@ -372,16 +384,16 @@
     @media (prefers-reduced-motion: reduce){
       .px, .trail { animation-duration: 0ms; opacity: 0; }
     }
-    @media (max-width:560px){
-      .title{ font-size: 12px; }
-      .card{ font-size: 12px; padding: 22px 14px; }
-      .quote{ line-height: 1.8; }
-      .g-title{ font-size: 12px; }
-      .g-desc{ font-size: 10px; }
+	@media (max-width:560px){
+	  .title{ font-size: 12px; }
+	  .card{ font-size: 12px; padding: 22px 14px; }
+	  .quote{ line-height: 1.8; }
+	  .g-title{ font-size: 12px; }
+	  .g-desc{ font-size: 10px; }
 
-      /* 버튼이 화면 밖으로 나가지 않도록 폰트/패딩 축소 */
-      .title-btn{ font-size: 10px; padding: 6px 8px; left: calc(100% + 8px); }
-    }
+	  /* 버튼은 이제 행 흐름에 있으므로 크기만 축소 */
+	  .title-btn{ font-size: 10px; padding: 6px 8px; }
+	}
   </style>
 </head>
 <body>
@@ -442,7 +454,7 @@
       },
       {
         title: "(In Progress 2)",
-        desc: "It’s an endless runner game. Based on one of the two plans I have in mind.",
+        desc: "An endless runner game. Based on one of the two plans I have in mind.",
         image: "img/questionmark.png",
         links: [
           { label: "Android(SOON)", url: ""}
