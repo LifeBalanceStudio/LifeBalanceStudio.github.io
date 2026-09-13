@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "file": "app.mjs",
+      "same": true
+    },
+    {
+      "file": "street-life.mjs",
+      "same": true
+    },
+    {
+      "file": "mood-light.mjs",
+      "same": true
+    },
+    {
+      "file": "seoul-weather.mjs",
+      "same": true
+    },
+    {
+      "file": "texel-splat.mjs",
+      "same": true
+    },
+    {
+      "file": "assets/room.glb",
+      "same": true
+    }
+  ],
+  "geometry": {
+    "hash": "2bd7fe3ef7f206eed64b38528371f9b60536a482d9bfefb204d96303a7bbb756",
+    "meshes": 1061,
+    "triangles": 22547,
+    "same": true
+  }
+}

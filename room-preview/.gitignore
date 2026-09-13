@@ -1,0 +1,7 @@
+node_modules/
+server.log
+server-error.log
+.server.json
+.server-site.json
+.env
+.env.*

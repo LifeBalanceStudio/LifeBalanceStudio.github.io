@@ -1,0 +1,26 @@
+[
+  {
+    "file": "texel-splat.mjs",
+    "same": true
+  },
+  {
+    "file": "assets/room.glb",
+    "same": true
+  },
+  {
+    "file": "exterior.mjs",
+    "same": true
+  },
+  {
+    "file": "street-life.mjs",
+    "same": true
+  },
+  {
+    "file": "app.mjs",
+    "same": true
+  },
+  {
+    "file": "seoul-weather.mjs",
+    "same": true
+  }
+]

@@ -1,0 +1,50 @@
+✔ 공원은 창 아래, 다리는 왼쪽, 타워와 도시는 강 건너 실제 공간에 놓인다 (1.4907ms)
+✔ 맞은편의 모든 건물 밑면과 타워 기단이 확장한 지면 위에 놓인다 (2.2269ms)
+✔ 건물은 깊이보다 좌우로 넓게 이어지고 창가의 좌우 50도 바깥 시야에도 보인다 (6.696ms)
+✔ 원경판은 후면과 양옆을 덮고 지면·수면과 겹치며 표시 범위 안에 있다 (3.211ms)
+✔ 도시의 진입도로는 강변도로와 후면도로를 연결하며 건물과 겹치지 않는다 (2.224ms)
+✔ 건물 종류별 입체 요소와 일정한 층 간격, 부드러운 접지 명암을 구성한다 (0.3636ms)
+✔ 방 안에서 가려진 공원이 창 가까이에서 아래를 보면 드러난다 (1.6902ms)
+✔ 차도에서 수변까지 공원·자전거길·인도·부두 순서와 접안 연결을 유지한다 (0.5921ms)
+✖ 이동 가능한 창가 위치에서 가까운 차도의 차량과 식당 선박을 볼 수 있다 (1.086ms)
+✔ 교량 주탑이 더 왼쪽에 있고 북단 도로는 완만한 각도로 둔치까지 끊김 없이 연결된다 (12.7591ms)
+✔ 방 중앙에서 교량과 타워를 창 너머로 볼 수 있고 블라인드를 닫으면 가려진다 (1.214ms)
+✔ 서울 낮과 밤에 외부 밝기가 바뀌며 일출·일몰 전후는 부드럽게 전환된다 (0.9295ms)
+✔ 차량과 보행자의 경로가 연결되고 실제 도로와 산책로 위에 유지된다 (50.0483ms)
+✔ 지속적인 프레임 저하에서만 자동 중지하고 비활성 시간은 측정에서 제외한다 (9.3643ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 177.1178
+
+✖ failing tests:
+
+test at tests\exterior.test.mjs:192:1
+✖ 이동 가능한 창가 위치에서 가까운 차도의 차량과 식당 선박을 볼 수 있다 (1.086ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + {
+  +   x: 0.0681139601606985,
+  +   z: -0.10900512166443316
+  + }
+  - null
+  
+      at TestContext.<anonymous> (file:///Z:/WORK/LifeBalanceStudio.github.io/room-preview/tests/exterior.test.mjs:195:53)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { x: 0.0681139601606985, z: -0.10900512166443316 },
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
