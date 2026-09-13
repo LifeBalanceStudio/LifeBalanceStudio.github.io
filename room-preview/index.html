@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LifeBalance Studio의 방을 둘러보고 게임을 만나보세요.">
+  <meta name="seoul-traffic-endpoint" content="">
+  <title>개발자의 방 · LifeBalance Studio</title>
+  <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
+</head>
+<body>
+  <noscript><p class="no-script">방을 둘러보려면 JavaScript가 필요합니다. <a href="../index.html">홈페이지 선택 화면으로 이동</a></p></noscript>
+  <main id="room" aria-label="개발자의 방">
+    <canvas id="view" tabindex="0" aria-label="3D 방. WASD로 이동하고 마우스로 둘러봅니다."></canvas>
+    <header class="brand"><span class="brand-mark" aria-hidden="true"></span><span>LifeBalance Studio</span></header>
+    <details id="view-settings" class="view-settings">
+      <summary>화면 설정</summary>
+      <div class="settings-content">
+        <label><input id="low-power" type="checkbox"> 절전 표현</label>
+        <small>해상도와 프레임 수를 낮춥니다.</small>
+        <label><input id="reduce-motion" type="checkbox"> 동작 줄이기</label>
+        <small>차량·강수·물·구름의 움직임을 줄입니다.</small>
+        <label class="range-label" for="mouse-sensitivity">마우스 감도 <output id="mouse-sensitivity-value" for="mouse-sensitivity">100%</output></label>
+        <input id="mouse-sensitivity" type="range" min="25" max="200" step="1" value="100" aria-describedby="mouse-sensitivity-help">
+        <small id="mouse-sensitivity-help">마우스와 드래그로 둘러보는 속도입니다.</small>
+        <button id="mouse-sensitivity-reset" class="setting-reset" type="button">감도 기본값으로</button>
+        <a href="../index.html">다른 방식으로 보기</a>
+      </div>
+    </details>
+    <label id="render-options" class="render-options" title="T 키 또는 체크박스로 화면 표현을 바꿉니다.">
+      <input id="texel-toggle" type="checkbox" aria-keyshortcuts="T" disabled>
+      <span>텍셀 스플래팅</span><kbd aria-hidden="true">T</kbd>
+    </label>
+    <aside id="weather-panel" class="weather-panel" aria-label="서울 날씨와 교통량">
+      <p id="weather-description" role="status" aria-live="polite">서울 · 날씨 확인 중</p>
+      <p id="traffic-description" role="status" aria-live="polite">올림픽대교 · 시간대 연출</p>
+      <small><a href="https://data.seoul.go.kr/dataList/OA-13316/A/1/datasetView.do" target="_blank" rel="noopener noreferrer">서울 열린데이터광장 교통량</a></small>
+      <small><a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" title="예보의 구름 양과 바람을 하늘 표현으로 단순화했습니다.">노르웨이기상청 예보</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></small>
+    </aside>
+    <div id="reticle" aria-hidden="true" hidden></div>
+    <div id="action-prompt" role="status" aria-live="polite" hidden></div>
+    <section id="entry-panel" class="panel" aria-labelledby="entry-title">
+      <p class="eyebrow">개발자의 방</p>
+      <h1 id="entry-title">잠깐 둘러보고 가세요.</h1>
+      <p id="entry-description">방을 준비하고 있습니다.</p>
+      <button id="enter-button" type="button" disabled>불러오는 중…</button>
+      <p class="subtle">키보드와 마우스로 둘러볼 수 있습니다.</p>
+      <p class="fallback-links"><a href="../classic.html">기존 홈페이지 보기</a> · <a href="../index.html">선택 화면으로</a></p>
+    </section>
+    <section id="pause-panel" class="panel" aria-labelledby="pause-title" hidden>
+      <p class="eyebrow">잠시 멈춤</p>
+      <h2 id="pause-title">방은 그대로 기다리고 있어요.</h2>
+      <button id="resume-button" type="button">계속 둘러보기</button>
+      <p class="fallback-links"><a href="../classic.html">기존 홈페이지 보기</a> · <a href="../index.html">선택 화면으로</a></p>
+    </section>
+    <dialog id="blind-controls" class="blind-controls" aria-labelledby="blind-title">
+      <h2 id="blind-title">블라인드 높이 조절</h2>
+      <label class="range-label" for="blind-opening">열린 정도 <output id="blind-opening-value" for="blind-opening">88%</output></label>
+      <input id="blind-opening" type="range" min="0" max="100" step="1" value="88" autofocus aria-describedby="blind-help">
+      <div class="blind-presets">
+        <button type="button" data-blind-opening="0">완전 닫기</button>
+        <button type="button" data-blind-opening="50">절반 열기</button>
+        <button type="button" data-blind-opening="100">완전 열기</button>
+      </div>
+      <small id="blind-help">조절 창 바깥을 드래그해 시점을 바꿀 수 있습니다. Esc로 돌아갑니다.</small>
+      <button id="blind-close" type="button">조절 끝내기</button>
+    </dialog>
+    <section id="tv-controls" aria-label="TV 메뉴 조작" hidden>
+      <p id="tv-selection" aria-live="polite"></p>
+      <p id="tv-description" class="sr-only" aria-live="polite"></p>
+      <div class="tv-buttons">
+        <button id="tv-previous" type="button" aria-label="이전 게임">이전</button>
+        <button id="tv-choose" type="button">자세히 보기</button>
+        <button id="tv-next" type="button" aria-label="다음 게임">다음</button>
+        <button id="tv-back" type="button">방으로 돌아가기</button>
+        <a id="tv-game-link" class="game-link" target="_blank" rel="noopener noreferrer" hidden>Google Play에서 보기</a>
+      </div>
+    </section>
+    <footer id="help" class="help"><span><kbd>WASD</kbd> 이동</span><span id="look-help">마우스 둘러보기</span><span><kbd>F</kbd> / <kbd>Space</kbd> 사용</span><span><kbd>Esc</kbd> 일시정지</span></footer>
+    <div id="notice" role="status" hidden></div>
+  </main>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

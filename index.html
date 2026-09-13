@@ -1,246 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LifeBalace Studio</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <style>
-    :root{ --fg:#fff; --bg:#000; --muted:#9aa0a6; --accent:#ffeb3b; }
-    body{ margin:0; background:var(--bg); color:var(--fg); font-family:'Press Start 2P',cursive; overflow:hidden; }
-
-    /* Falling dots canvas */
-    #stars{ position:fixed; inset:0; width:100%; height:100%; z-index:0 }
-
-    /* Layout */
-    .wrap{ position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; margin-top:60px; }
-    header h1{ margin:20px 0; font-size:24px; text-align:center }
-
-    /* Intro lines */
-    .intro{ margin-top:10px; text-align:center; font-size:12px; line-height:1.8; }
-    .intro .line{ display:block; }
-
-    /* Game list */
-    .game-list{ margin-top:60px; display:flex; flex-direction:column; align-items:flex-start; position:relative }
-    .item{ display:block; text-decoration:none; color:var(--fg); margin:10px 0; line-height:1.6; position:relative }
-    .item[aria-current="true"]{ color:var(--accent) }
-
-    /* Cursor: CSS triangle for pixel-perfect apex; instant movement */
-    .cursor{ position:absolute; left:-28px; top:0; line-height:0; transform:translateY(-50%); }
-    .cursor > i{ display:block; width:0; height:0; border-style:solid; border-width:0.65em 0 0.65em 1.0em; border-color:transparent transparent transparent #fff; }
-
-    .hint{ margin-top:14px; font-size:10px; color:var(--muted) }
-
-    /* Detail screens */
-    .screen{ display:none }
-    .screen.active{ display:block }
-    .detail{ position:absolute; inset:0; padding:18vh 6vw 8vh; background:rgba(0,0,0,.86); backdrop-filter:blur(2px); z-index:2 }
-    .detail h2{ margin:0 0 18px; font-size:20px }
-    .detail p{ font-size:12px; line-height:1.3; color:#d7d7d7; margin:0 0 16px }
-
-    /* Store & back links list */
-    .stores{ list-style:none; padding:0; margin:8px 0 0; max-width:min(720px,92vw); position:relative }
-    .stores li{ display:flex; align-items:center; gap:10px; margin:10px 0; }
-    .stores a{ color:#fff; text-decoration:underline; }
-    .stores a[aria-current="true"]{ color:var(--accent); text-decoration:none; border-bottom:1px dashed var(--accent); }
-
-    /* Detail cursor (left of store list) */
-    .d-cursor{ position:absolute; margin-left:-22px; line-height:0; transform:translateY(-50%); }
-    .d-cursor > i{ display:block; width:0; height:0; border-style:solid; border-width:0.55em 0 0.55em 0.9em; border-color:transparent transparent transparent #fff; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="작고 간단한 게임을 천천히 만드는 LifeBalance Studio의 개발자 홈페이지입니다. 방을 둘러보거나 게임 포트폴리오를 바로 확인하세요.">
+  <meta name="theme-color" content="#15191a">
+  <title>LifeBalance Studio · 게임과 작은 방</title>
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="LifeBalance Studio · 게임과 작은 방">
+  <meta property="og:description" content="작고 간단한 게임을 천천히 만듭니다. 방을 둘러보거나 게임 포트폴리오를 바로 확인하세요.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://lifebalancestudio.github.io/img/room-preview.png">
+  <link rel="stylesheet" href="site.css">
 </head>
 <body>
-  <canvas id="stars"></canvas>
-  <div class="wrap">
-    <header><h1>LifeBalace Studio</h1></header>
-
-    <div class="intro">
-      <span class="line">I make games.</span>
-      <span class="line">The assets might be a bit rough,</span>
-      <span class="line">but I’m taking my time making simple games.</span>
-    </div>
-
-    <!-- 메인 게임 목록 -->
-    <nav class="game-list" id="gameList" aria-label="게임 목록">
-      <div class="cursor" id="cursor"><i aria-hidden="true"></i></div>
-      <a class="item" href="#game-1" data-index="0">Uncap</a>
-      <a class="item" href="#game-2" data-index="1">Fast Pop!!</a>
-      <a class="item" href="#game-3" data-index="2">PachiPachi(SOON)</a>
-      <a class="item" href="#game-4" data-index="3">(In Progress 1)</a>
-      <a class="item" href="index_v2.html" data-index="3">Change Webpage Type</a>
-    </nav>
-    <div class="hint">W/S or ↑/↓: Move · Enter/Space: Open/Close · ESC/BACKSPACE: Close</div>
-
-    <!-- 상세 페이지들 -->
-    <main>
-      <section id="game-1" class="screen detail" aria-labelledby="g1-title">
-        <h2 id="g1-title">Uncap</h2>
-        <p>Just uncap<br>the bottle cap.</p>
-        <ul class="stores" data-detail="1">
-          <div class="d-cursor" aria-hidden="true"><i></i></div>
-          <li><a href="https://play.google.com/store/apps/details?id=com.LifeBalance.Uncap" target="_blank" rel="noopener" data-index="0">Google Play (AOS)</a></li>
-          <li><a href="#" data-index="1" data-back="1">Back</a></li>
-        </ul>
-      </section>
-
-      <section id="game-2" class="screen detail" aria-labelledby="g2-title">
-        <h2 id="g2-title">Fast Pop!!</h2>
-        <p>You can play this game with up to two fingers.<br>MAYBE.</p>
-        <ul class="stores" data-detail="2">
-          <div class="d-cursor" aria-hidden="true"><i></i></div>
-          <li><a href="https://play.google.com/store/apps/details?id=com.LifeBalance.FastPop" target="_blank" rel="noopener" data-index="0">Google Play (AOS)</a></li>
-          <li><a href="#" data-index="1" data-back="1">Back</a></li>
-        </ul>
-      </section>
-
-      <section id="game-3" class="screen detail" aria-labelledby="g3-title">
-        <h2 id="g3-title">PachiPachi(SOON)</h2>
-        <p>This is a casual game inspired by pachislot.<br>Control the balls and claim a variety of rewards!</p>
-        <ul class="stores" data-detail="3">
-          <div class="d-cursor" aria-hidden="true"><i></i></div>
-          <li><target="_blank" rel="noopener" data-index="0">Google Play (AOS)(SOON)</a></li>
-          <li><a href="#" data-index="1" data-back="1">Back</a></li>
-        </ul>
-      </section>
-	  
-	  <section id="game-4" class="screen detail" aria-labelledby="g4-title">
-        <h2 id="g3-title">(In Progress 1)</h2>
-        <p>It is a game that carries a message.<br>This is the final stage of my first journey.</p>
-        <ul class="stores" data-detail="3">
-          <div class="d-cursor" aria-hidden="true"><i></i></div>
-          <li><target="_blank" rel="noopener" data-index="0">Google Play (AOS)(SOON)</a></li>
-          <li><a href="#" data-index="1" data-back="1">Back</a></li>
-        </ul>
-      </section>
-    </main>
-  </div>
-
-  <script>
-    // ---------------- Falling dots (3 speed tiers)
-    const canvas = document.getElementById('stars');
-    const ctx = canvas.getContext('2d');
-    let w, h, dots = []; const speeds = [30, 60, 110];
-    function resize(){ w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; initDots(); }
-    function initDots(){ dots.length = 0; for(const speed of speeds){ for(let i=0;i<40;i++){ dots.push({ x:Math.random()*w, y:Math.random()*h, speed, size:1+Math.random()*2 }); } } }
-    function loop(){ ctx.clearRect(0,0,w,h); ctx.fillStyle = '#fff'; for(const d of dots){ d.y += d.speed * 0.016; if(d.y>h) d.y = -d.size; ctx.fillRect(d.x,d.y,d.size,d.size); } requestAnimationFrame(loop); }
-    window.addEventListener('resize', resize); resize(); loop();
-
-    // ---------------- Utilities
-    const items = Array.from(document.querySelectorAll('.item'));
-    const cursor = document.getElementById('cursor');
-    const screens = Array.from(document.querySelectorAll('.screen'));
-
-    function detailOpen(){ return Boolean(location.hash); }
-    function activeScreen(){ if(!detailOpen()) return null; const id = location.hash.slice(1); return document.getElementById(id); }
-
-    // ---------------- Main list cursor
-    let index = 0;
-    function centerCursorTo(target){
-      const BASELINE_NUDGE = -2; // 미세 보정
-      const mid = target.offsetTop + (target.offsetHeight/2) + BASELINE_NUDGE;
-      cursor.style.top = mid + 'px';
-    }
-    function setIndex(i){ index = (i + items.length) % items.length; items.forEach((a,idx)=>a.setAttribute('aria-current', String(idx===index))); centerCursorTo(items[index]); }
-
-    // ---------------- Detail store/back navigation
-    function getDetailLinks(sc){
-      if(!sc) return [];
-      const ul = sc.querySelector('.stores');
-      if(!ul) return [];
-      return Array.from(ul.querySelectorAll('a'));
-    }
-    function getDetailCursor(sc){ return sc ? sc.querySelector('.d-cursor') : null; }
-
-    let dIndex = 0; // 상세 내 선택 인덱스
-    function setDetailIndex(sc, i){
-      const links = getDetailLinks(sc);
-      if(links.length === 0) return;
-      dIndex = (i + links.length) % links.length;
-      links.forEach((a,idx)=>a.setAttribute('aria-current', String(idx===dIndex)));
-      // 커서 위치 업데이트 (각 링크의 세로 중앙)
-      const target = links[dIndex];
-      const dc = getDetailCursor(sc);
-      if(dc){
-        const mid = target.offsetTop + (target.offsetHeight/2) - 2; // 소폭 보정
-        dc.style.position = 'absolute';
-        dc.style.top = mid + 'px';
-      }
-    }
-
-    function updateScreens(){
-      const hash = location.hash;
-      screens.forEach(sc => sc.classList.toggle('active', ('#'+sc.id) === hash));
-      // 상세가 열릴 때 상세 커서 초기화
-      if(detailOpen()){
-        const sc = activeScreen();
-        setDetailIndex(sc, 0);
-      }
-    }
-
-    function openSelected(){
-      const hash = location.hash;
-      const href = items[index].getAttribute('href');
-      // 토글: 이미 같은 상세면 닫기
-      if(hash && ('#'+items[index].getAttribute('href').substring(1)) === hash){
-        closeDetail();
-        return;
-      }
-      if(!href) return;
-      if(href === 'index_v2.html') { window.location.href = 'index_v2.html'; return; }
-      location.hash = href; // 상세 열기
-      updateScreens();
-    }
-    function closeDetail(){ history.pushState('', document.title, window.location.pathname + window.location.search); updateScreens(); }
-
-    // 초기 위치 및 화면 상태
-    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>{ setIndex(0); updateScreens(); }); }
-    else { setIndex(0); updateScreens(); }
-
-    // 마우스 상호작용 (메인 목록)
-    items.forEach((a,i)=>{
-      a.addEventListener('mouseenter',()=>{ if(!detailOpen()) setIndex(i); });
-      a.addEventListener('click',(e)=>{ e.preventDefault(); if(!detailOpen()){ setIndex(i); if(a.getAttribute('href')==='index_v2.html'){ window.location.href='index_v2.html'; } else { openSelected(); } } });
-    });
-
-    // 상세 내 링크 hover/클릭 처리 (Back 포함)
-    document.querySelectorAll('.stores a').forEach(a=>{
-      a.addEventListener('mouseenter',()=>{ const sc = activeScreen(); if(sc){ const links = getDetailLinks(sc); const idx = links.indexOf(a); if(idx>=0) setDetailIndex(sc, idx); } });
-      a.addEventListener('click',(e)=>{
-        const sc = activeScreen(); if(!sc) return;
-        if(a.dataset.back === '1'){ e.preventDefault(); closeDetail(); }
-      });
-    });
-
-    // ---------------- Keyboard controls
-    window.addEventListener('keydown',(e)=>{
-      // 공통: Space/페이지키 스크롤 방지
-      if(e.key === ' ' || e.key === 'PageDown' || e.key === 'PageUp') e.preventDefault();
-
-      if(!detailOpen()){
-        // 메인 목록 조작
-        if(e.key==='w'||e.key==='W'||e.key==='ArrowUp'){ setIndex(index-1); }
-        else if(e.key==='s'||e.key==='S'||e.key==='ArrowDown'){ setIndex(index+1); }
-        else if(e.key==='Enter' || e.key===' '){ 
-          const href = items[index].getAttribute('href');
-          if(href==='index_v2.html'){ window.location.href='index_v2.html'; } else { openSelected(); }
-        }
-      } else {
-        // 상세 화면 조작 (상점 + Back)
-        const sc = activeScreen();
-        const links = getDetailLinks(sc);
-        if(e.key==='w'||e.key==='W'||e.key==='ArrowUp'){ if(links.length) setDetailIndex(sc, dIndex-1); }
-        else if(e.key==='s'||e.key==='S'||e.key==='ArrowDown'){ if(links.length) setDetailIndex(sc, dIndex+1); }
-        else if(e.key==='Enter' || e.key===' '){
-          if(!links.length) { closeDetail(); return; }
-          const a = links[dIndex];
-          if(a.dataset.back === '1'){ closeDetail(); }
-          else { a.click(); }
-        }
-        else if(e.key==='Escape' || e.key==='Backspace'){ closeDetail(); }
-      }
-    });
-
-    window.addEventListener('hashchange', updateScreens);
-  </script>
+  <a class="skip-link" href="#ways">둘러보기 방식 선택으로 이동</a>
+  <header class="site-header"><span class="studio-mark" aria-hidden="true"></span>LifeBalance Studio</header>
+  <main>
+    <section class="introduction" aria-labelledby="page-title">
+      <p class="eyebrow">게임을 만드는 작은 공간</p>
+      <h1 id="page-title">작은 게임,<br>작은 방.</h1>
+      <p>작고 간단한 게임을 천천히 만들고 있습니다.<br>방을 둘러보거나, 만든 게임들을 바로 만나보세요.</p>
+    </section>
+    <section id="ways" class="choices" aria-label="둘러보기 방식">
+      <a class="choice room-choice" href="room-preview/">
+        <div class="choice-image"><img src="img/room-preview.png" width="960" height="600" alt="침대와 브라운관 TV, 서울 풍경이 보이는 어두운 방" fetchpriority="high"></div>
+        <div class="choice-copy"><span class="choice-label">공간에서 만나기</span><h2>방 둘러보기 <span aria-hidden="true">↗</span></h2><p>창밖의 서울과 작은 게임기.<br>TV 앞에서 게임 이야기를 펼쳐보세요.</p><span class="choice-hint">키보드·마우스 사용 · WASD 이동, F 또는 Space 상호작용</span></div>
+      </a>
+      <a class="choice classic-choice" href="classic.html">
+        <div class="choice-image"><img src="img/classic-preview.png" width="960" height="600" alt="별이 있는 배경 위에 게임 목록을 보여주는 기존 홈페이지" loading="lazy"></div>
+        <div class="choice-copy"><span class="choice-label">게임부터 만나기</span><h2>게임 포트폴리오 <span aria-hidden="true">↗</span></h2><p>만든 게임과 짧은 소개를<br>기존 홈페이지에서 바로 확인하세요.</p><span class="choice-hint">휴대폰에서도 편하게 · 클릭하거나 터치해 선택</span></div>
+      </a>
+    </section>
+    <section class="studio-note" aria-labelledby="studio-title"><h2 id="studio-title">LifeBalance Studio</h2><p>게임을 만들고, 그 안에 작은 경험을 담습니다.<br>Uncap, Fast Pop!! 그리고 다음 게임들을 소개합니다.</p><div class="studio-links"><a href="https://github.com/LifeBalanceStudio/LifeBalanceStudio.github.io" target="_blank" rel="noopener noreferrer">홈페이지 GitHub 프로젝트 <span aria-hidden="true">↗</span></a><a href="mailto:lifebalance.games@gmail.com">Uncap 문의</a><a href="mailto:plays.lifebalance@gmail.com">Fast Pop 문의</a></div></section>
+  </main>
+  <footer class="site-footer"><span>LifeBalance Studio</span><span>원하는 방식으로 천천히 둘러보세요.</span></footer>
 </body>
 </html>

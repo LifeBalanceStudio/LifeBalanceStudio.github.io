@@ -1,0 +1,212 @@
+{
+  "metadata": {
+    "before": {
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 (0x00002216) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "timer": true,
+      "texelSupported": true,
+      "width": 1280,
+      "height": 800,
+      "dpr": 1,
+      "timeUpdateMs": 0.01099999999627471,
+      "skyMeshes": 1,
+      "skyTriangles": 528
+    },
+    "after": {
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 (0x00002216) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "timer": true,
+      "texelSupported": true,
+      "width": 1280,
+      "height": 800,
+      "dpr": 1,
+      "timeUpdateMs": 0.02599999999627471,
+      "skyMeshes": 1,
+      "skyTriangles": 528
+    }
+  },
+  "cases": [
+    {
+      "night": false,
+      "texel": false,
+      "before": {
+        "wall": {
+          "median": 2.2000000029802322,
+          "p95": 3.399999998509884,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 0.522048,
+          "p95": 0.801792,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 28,
+          "calls": 924,
+          "triangles": 49196,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "after": {
+        "wall": {
+          "median": 2.199999999254942,
+          "p95": 2.5,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 0.524128,
+          "p95": 0.819008,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 28,
+          "calls": 924,
+          "triangles": 49196,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "wallDeltaMs": -3.725290298461914e-9,
+      "gpuDeltaMs": 0.002080000000000082
+    },
+    {
+      "night": false,
+      "texel": true,
+      "before": {
+        "wall": {
+          "median": 6.899999998509884,
+          "p95": 7.300000000745058,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 6.544384,
+          "p95": 7.191552,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 476,
+          "calls": 3048,
+          "triangles": 2535004,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "after": {
+        "wall": {
+          "median": 7,
+          "p95": 7.600000001490116,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 6.593472,
+          "p95": 7.50688,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 476,
+          "calls": 3048,
+          "triangles": 2535004,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "wallDeltaMs": 0.10000000149011612,
+      "gpuDeltaMs": 0.04908800000000024
+    },
+    {
+      "night": true,
+      "texel": false,
+      "before": {
+        "wall": {
+          "median": 1.199999999254942,
+          "p95": 1.5,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 0.489472,
+          "p95": 0.897024,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 1848,
+          "calls": 314,
+          "triangles": 38862,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "after": {
+        "wall": {
+          "median": 1.199999999254942,
+          "p95": 1.3999999985098839,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 0.529312,
+          "p95": 0.877568,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 1848,
+          "calls": 314,
+          "triangles": 38862,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "wallDeltaMs": 0,
+      "gpuDeltaMs": 0.03983999999999999
+    },
+    {
+      "night": true,
+      "texel": true,
+      "before": {
+        "wall": {
+          "median": 7,
+          "p95": 7.800000000745058,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 6.504448,
+          "p95": 7.513984,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 2296,
+          "calls": 3122,
+          "triangles": 2521091,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "after": {
+        "wall": {
+          "median": 7,
+          "p95": 7.700000002980232,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 6.658048,
+          "p95": 7.4496,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 2296,
+          "calls": 3122,
+          "triangles": 2521091,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "wallDeltaMs": 0,
+      "gpuDeltaMs": 0.15359999999999996
+    }
+  ],
+  "images": [
+    "room-sun.png",
+    "room-moon-stars.png",
+    "room-moon-stars-texel.png",
+    "room-clouds.png",
+    "room-overcast.png"
+  ],
+  "errors": []
+}

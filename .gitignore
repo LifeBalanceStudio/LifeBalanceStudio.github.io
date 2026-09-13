@@ -1,0 +1,27 @@
+# 로컬 의존성과 개인 설정
+node_modules/
+.env
+.env.*
+
+# 문서와 기획 자료는 로컬에서만 보관
+*.[mM][dD]
+docs/
+
+# 실행 캐시와 로그
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# 과거 모델, 자동 백업과 중간 산출물
+/modeling/revisions/
+*.blend[0-9]*
+/modeling/output/bedding-generated/
+/modeling/output/previews/
+/modeling/output/*.json
+/modeling/output/ceiling-light.glb
+/modeling/output/wall-switch.glb
+
+# 조사에 사용한 참고용 도구와 원본
+/tools/nes-reference/
+/tools/texel-reference/

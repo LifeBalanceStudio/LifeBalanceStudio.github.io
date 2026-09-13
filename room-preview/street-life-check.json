@@ -1,0 +1,226 @@
+{
+  "metadata": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 (0x00002216) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "timer": true,
+    "width": 1280,
+    "height": 800,
+    "dpr": 1
+  },
+  "updateMs": 0.006899999998509884,
+  "triangles": 2880,
+  "meshGroups": 5,
+  "cases": [
+    {
+      "view": "window",
+      "texel": false,
+      "baseline": {
+        "wall": {
+          "median": 2.7999999970197678,
+          "p95": 3.300000000745058,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 0.608256,
+          "p95": 1.087488,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 28,
+          "calls": 1528,
+          "triangles": 47610,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "actors": {
+        "wall": {
+          "median": 2.7000000029802322,
+          "p95": 3,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 0.662528,
+          "p95": 0.990208,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 56,
+          "calls": 1538,
+          "triangles": 53370,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "wallDeltaMs": -0.09999999403953552,
+      "gpuDeltaMs": 0.05427199999999999,
+      "pairedWallDeltas": [
+        -0.3999999985098839,
+        0,
+        3.725290298461914e-9,
+        0.09999999776482582,
+        0
+      ]
+    },
+    {
+      "view": "window",
+      "texel": true,
+      "baseline": {
+        "wall": {
+          "median": 8.399999998509884,
+          "p95": 9.300000000745058,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 8.199168,
+          "p95": 8.843264,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 672,
+          "calls": 3926,
+          "triangles": 3103521,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "actors": {
+        "wall": {
+          "median": 8.5,
+          "p95": 9.400000002235174,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 8.210432,
+          "p95": 8.899584,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 1064,
+          "calls": 3981,
+          "triangles": 3135201,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "wallDeltaMs": 0.10000000149011612,
+      "gpuDeltaMs": 0.011264000000000607,
+      "pairedWallDeltas": [
+        -0.09999999776482582,
+        0.30000000074505806,
+        0.10000000149011612,
+        0.09999999776482582,
+        0.10000000149011612
+      ]
+    },
+    {
+      "view": "room",
+      "texel": false,
+      "baseline": {
+        "wall": {
+          "median": 3.400000002235174,
+          "p95": 3.600000001490116,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 1.697792,
+          "p95": 2.316288,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 4228,
+          "calls": 1870,
+          "triangles": 73742,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "actors": {
+        "wall": {
+          "median": 3.5,
+          "p95": 3.800000000745058,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 1.803264,
+          "p95": 2.453504,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 4256,
+          "calls": 1880,
+          "triangles": 79502,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "wallDeltaMs": 0.09999999776482582,
+      "gpuDeltaMs": 0.10547200000000001,
+      "pairedWallDeltas": [
+        0.20000000298023224,
+        -3.725290298461914e-9,
+        0.10000000149011612,
+        0.09999999776482582,
+        0.09999999776482582
+      ]
+    },
+    {
+      "view": "room",
+      "texel": true,
+      "baseline": {
+        "wall": {
+          "median": 8.700000002980232,
+          "p95": 9.200000002980232,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 8.701952,
+          "p95": 9.48224,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 4872,
+          "calls": 4176,
+          "triangles": 3128931,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "actors": {
+        "wall": {
+          "median": 8.800000000745058,
+          "p95": 9.199999999254942,
+          "samples": 80
+        },
+        "gpu": {
+          "median": 8.841216,
+          "p95": 9.427968,
+          "samples": 80
+        },
+        "draws": {
+          "frame": 5264,
+          "calls": 4231,
+          "triangles": 3160611,
+          "points": 0,
+          "lines": 0
+        }
+      },
+      "wallDeltaMs": 0.09999999776482582,
+      "gpuDeltaMs": 0.13926399999999894,
+      "pairedWallDeltas": [
+        0,
+        0.30000000074505806,
+        -0.10000000521540642,
+        0.30000000074505806,
+        -3.725290298461914e-9
+      ]
+    }
+  ],
+  "frames": [
+    "day.png",
+    "day-texel.png",
+    "night.png",
+    "night-texel.png",
+    "models.png"
+  ],
+  "errors": []
+}

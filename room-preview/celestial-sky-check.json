@@ -1,0 +1,95 @@
+{
+  "phases": [
+    {
+      "name": "crescent",
+      "label": "초승달",
+      "date": "2026-09-15T19:00:00+09:00",
+      "expectedFraction": 0.19225912596858807,
+      "renderedFraction": 0.19690127686079104
+    },
+    {
+      "name": "quarter",
+      "label": "상현 무렵",
+      "date": "2026-09-18T20:00:00+09:00",
+      "expectedFraction": 0.46298427174770573,
+      "renderedFraction": 0.4665991902834008
+    },
+    {
+      "name": "full",
+      "label": "보름달",
+      "date": "2026-09-27T00:00:00+09:00",
+      "expectedFraction": 0.9993229301289243,
+      "renderedFraction": 0.9996496418561196
+    },
+    {
+      "name": "last-quarter",
+      "label": "하현 무렵",
+      "date": "2026-10-04T04:00:00+09:00",
+      "expectedFraction": 0.47460006285362294,
+      "renderedFraction": 0.4780831516661476
+    },
+    {
+      "name": "waning",
+      "label": "그믐달",
+      "date": "2026-10-08T05:00:00+09:00",
+      "expectedFraction": 0.0900698590326593,
+      "renderedFraction": 0.09523902211149175
+    }
+  ],
+  "stars": [
+    {
+      "texel": false,
+      "clearPixels": 1044,
+      "fixedMeanDifference": 0,
+      "cloudFluxRatio": 0.5817952712807725,
+      "movingCloudDifference": 0.33945709174819383,
+      "overcastFluxRatio": 0
+    },
+    {
+      "texel": true,
+      "clearPixels": 1045,
+      "fixedMeanDifference": 0,
+      "cloudFluxRatio": 0.5803969289903737,
+      "movingCloudDifference": 0.33130579969575386,
+      "overcastFluxRatio": 0
+    }
+  ],
+  "moons": [
+    {
+      "texel": false,
+      "clearFlux": 16786729.449527264,
+      "cloudFluxRatio": 0.010469023592266537,
+      "overcastFluxRatio": 0
+    },
+    {
+      "texel": true,
+      "clearFlux": 17665222.787677288,
+      "cloudFluxRatio": 0.010101580306632572,
+      "overcastFluxRatio": 0
+    }
+  ],
+  "frames": [
+    "moon-crescent.png",
+    "moon-crescent-texel.png",
+    "moon-quarter.png",
+    "moon-full.png",
+    "moon-full-texel.png",
+    "moon-last-quarter.png",
+    "moon-waning.png",
+    "stars-clear.png",
+    "stars-clouds.png",
+    "stars-moving-clouds.png",
+    "stars-overcast.png",
+    "moon-clouds.png",
+    "moon-overcast.png",
+    "stars-clear-texel.png",
+    "stars-clouds-texel.png",
+    "stars-moving-clouds-texel.png",
+    "stars-overcast-texel.png",
+    "moon-clouds-texel.png",
+    "moon-overcast-texel.png"
+  ],
+  "glError": 0,
+  "errors": [],
+  "failures": []
+}

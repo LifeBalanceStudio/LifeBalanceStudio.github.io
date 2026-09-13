@@ -1,0 +1,87 @@
+@font-face { font-family: "NESMenu"; src: url("./assets/fonts/PressStart2P-Regular.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Galmuri11"; src: url("./assets/fonts/Galmuri11.woff2") format("woff2"); font-display: swap; }
+:root { color-scheme: dark; font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; color: #f4ead7; background: #101419; }
+* { box-sizing: border-box; }
+html, body, #room { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, canvas:focus-visible, input:focus-visible { outline: 2px solid #e9bb75; outline-offset: 4px; }
+[hidden] { display: none !important; }
+#view { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+.brand { position: absolute; top: max(26px, env(safe-area-inset-top)); left: max(30px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 11px; font-size: .875rem; letter-spacing: .08em; pointer-events: none; text-shadow: 0 2px 8px #000; }
+.brand-mark { width: 9px; height: 9px; background: #d5a464; box-shadow: 0 0 16px #bf8b4e55; }
+.render-options { position: absolute; top: max(18px, env(safe-area-inset-top)); right: max(26px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 9px; padding: 10px 13px; border: 1px solid #c7ae814a; background: #11161ddd; color: #f4ead7; font-size: .8125rem; cursor: pointer; }
+.render-options input { margin: 0; width: 17px; height: 17px; accent-color: #e9bb75; cursor: pointer; }
+.render-options:has(input:disabled) { opacity: .55; cursor: default; }
+.render-options kbd { margin-left: 3px; padding: 0 4px; border: 1px solid #c7ae8155; font-size: .75rem; }
+.weather-panel { position: absolute; top: 66px; right: max(26px, env(safe-area-inset-right)); padding: 9px 12px; max-width: 280px; background: #11161dcc; border: 1px solid #c7ae8126; color: #ded4c3; text-align: right; }
+.weather-panel p { margin: 0 0 4px; font-size: .75rem; line-height: 1.5; }
+.weather-panel small, .weather-panel a { font-size: .625rem; color: #a5adb7; }
+.weather-panel a { text-underline-offset: 2px; }
+.weather-panel small { display: block; }
+.view-settings { position: absolute; top: 62px; left: max(26px, env(safe-area-inset-left)); z-index: 4; max-width: 230px; background: #11161dec; border: 1px solid #c7ae8138; color: #ded4c3; font-size: .75rem; }
+.view-settings summary { padding: 10px 13px; cursor: pointer; }
+.settings-content { display: grid; gap: 8px; padding: 3px 13px 13px; }
+.settings-content label { display: flex; align-items: center; gap: 8px; min-height: 28px; cursor: pointer; }
+.settings-content input { accent-color: #c7a36b; }
+.settings-content small { color: #a9aea8; font-size: .65rem; line-height: 1.5; }
+.settings-content a, .fallback-links a { color: #d0b88f; text-underline-offset: 4px; }
+.fallback-links { font-size: .75rem; line-height: 1.8; }
+.game-link { display: inline-flex; align-items: center; padding: 10px 14px; color: #efe3ce; border: 1px solid #c7ae8166; text-decoration: none; font-size: .8rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.no-script { position: fixed; z-index: 20; inset: 0 0 auto; margin: 0; padding: 18px; background: #15191a; color: #ebe6dc; line-height: 1.7; }
+.no-script a { color: #d0b88f; }
+.environment-review { position: absolute; z-index: 6; top: 184px; right: max(26px, env(safe-area-inset-right)); width: 300px; max-height: calc(100dvh - 258px); overflow: auto; color: #e7decd; background: #11161df2; border: 1px solid #bda37466; font-size: .75rem; }
+.environment-review summary { cursor: pointer; padding: 12px 13px; }
+.review-badge { float: right; color: #baa681; font-size: .65rem; }
+.review-content { display: grid; gap: 9px; padding: 0 13px 14px; }
+#review-status { padding: 9px; background: #ffffff07; border-left: 2px solid #799b8b; font-size: .68rem; line-height: 1.6; }
+.review-active #review-status { border-color: #e7b773; color: #f0d4a5; }
+.review-description { margin: 0; color: #a6aea9; font-size: .65rem; line-height: 1.65; }
+.review-date-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; }
+.review-content label { display: grid; gap: 6px; min-width: 0; }
+.review-content input, .review-content select, .review-content button { font: inherit; min-width: 0; color-scheme: dark; }
+.review-content input[type="date"], .review-content input[type="time"], .review-content select { width: 100%; padding: 7px 5px; color: #ebe6dc; background: #1d2629; border: 1px solid #9ca08a44; }
+.review-content input[type="range"] { width: 100%; accent-color: #c7a36b; }
+.review-content input:focus-visible, .review-content select:focus-visible, .review-content button:focus-visible { outline: 2px solid #66e4bb; outline-offset: 2px; }
+.review-presets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.review-content button { padding: 9px 5px; color: #e7decd; background: #243034; border: 1px solid #9ca08a44; cursor: pointer; font-size: .68rem; }
+#review-reset { border-color: #b89b6788; }
+#review-rate-label { color: #c7b797; font-size: .65rem; }
+@media (max-width: 600px) { .environment-review { right: 20px; top: 204px; width: min(300px, calc(100vw - 40px)); max-height: calc(100dvh - 278px); } }
+@media (max-width: 600px) { .view-settings { top: 62px; left: 20px; } .weather-panel { max-width: 230px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+.panel { position: absolute; left: max(30px, env(safe-area-inset-left)); bottom: 96px; max-width: min(440px, calc(100vw - 60px)); padding: 27px 30px; background: #11161deb; border: 1px solid #c7ae812e; box-shadow: 0 15px 55px #0007; }
+.eyebrow { color: #c7a16c; font-size: .875rem; letter-spacing: .15em; margin: 0 0 12px; }
+h1, h2 { font-size: clamp(1.25rem, 2.5vw, 1.625rem); line-height: 1.5; font-weight: 500; margin: 0 0 12px; }
+.panel p { line-height: 1.7; }
+.panel button { display: block; width: 100%; padding: 13px 18px; margin-top: 19px; border: 1px solid #c7a16c; background: #c7a16c; color: #171715; font-weight: 700; }
+.panel button:hover { background: #dfbc85; }
+.panel button:disabled { opacity: .45; cursor: wait; }
+.panel .subtle { color: #abb0b9; font-size: .875rem; margin: 13px 0 0; }
+.help { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); left: 30px; right: 30px; display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: .875rem; line-height: 1.8; color: #d4d1c9; text-shadow: 0 2px 5px #000; pointer-events: none; }
+kbd { font: inherit; color: #f3d8aa; }
+#reticle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff9; box-shadow: 0 0 2px #000; left: calc(50% - 2px); top: calc(50% - 2px); pointer-events: none; }
+#action-prompt { position: absolute; left: 50%; top: calc(50% + 30px); transform: translateX(-50%); padding: 9px 16px; background: #101419df; border: 1px solid #eed19a42; color: #f5dfb8; font-size: 1rem; white-space: nowrap; pointer-events: none; }
+#tv-controls { position: absolute; bottom: 27px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 32px); text-align: center; background: #101419ea; border: 1px solid #c7ae812e; padding: 12px 18px; }
+#tv-selection { margin: 0 0 10px; font-size: .875rem; color: #dacdb6; }
+.tv-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.range-label { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; }
+.range-label output { color: #dec494; font-variant-numeric: tabular-nums; }
+.settings-content input[type="range"], .blind-controls input[type="range"] { width: 100%; accent-color: #c9a875; margin: 5px 0; }
+.setting-reset { align-self: flex-start; border: 1px solid #b5a88c5e; padding: 6px 10px; background: #25272b; color: #eee2cf; font: inherit; }
+.blind-controls { position: fixed; inset: auto 24px 90px auto; margin: 0; width: 320px; max-width: calc(100vw - 32px); color: #eee2cf; background: #171c22f5; border: 1px solid #c7ae8170; padding: 20px; box-shadow: 0 12px 40px #0006; }
+.blind-controls[open] { display: grid; gap: 14px; }
+.blind-controls h2 { font-size: 1rem; margin: 0 0 2px; }
+.blind-controls small { color: #c2bbaa; line-height: 1.5; }
+.blind-controls button { border: 1px solid #b5a88c5e; padding: 9px 10px; background: #30302b; color: #eee2cf; font: inherit; font-size: .82rem; }
+.blind-presets { display: flex; gap: 6px; }
+.blind-presets button { flex: 1; white-space: nowrap; padding-inline: 5px; }
+.blind-controls #blind-close { background: #c9a875; color: #151719; font-weight: 700; }
+@media (max-width: 600px) { .blind-controls { inset: auto 16px 24px; width: auto; } }
+.tv-buttons button { border: 1px solid #b5a88c5e; padding: 8px 14px; background: #25272b; font-size: .875rem; white-space: nowrap; }
+.tv-buttons button:hover { background: #464039; }
+.tv-buttons button:disabled { opacity: .35; cursor: default; }
+#notice { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); max-width: min(90vw, 620px); background: #161b22ec; padding: 12px 18px; line-height: 1.6; font-size: .875rem; border: 1px solid #786f5a; }
+@media (max-width: 600px) { .brand { top: 20px; left: 20px; } .panel { left: 20px; max-width: calc(100vw - 40px); padding: 22px; bottom: 125px; } .help { left: 20px; right: 20px; gap: 4px 16px; } #tv-controls { bottom: 15px; width: calc(100vw - 30px); } }
+@media (max-width: 600px) { .render-options { top: 52px; right: 20px; } }
+@media (max-width: 600px) { .weather-panel { top: 100px; right: 20px; } }

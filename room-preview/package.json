@@ -1,0 +1,15 @@
+{
+  "name": "lifebalance-room-preview",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "vendor": "node scripts/vendor.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "galmuri": "2.40.3",
+    "suncalc": "2.0.2",
+    "three": "0.186.0"
+  }
+}

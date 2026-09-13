@@ -1,0 +1,86 @@
+{
+  "rows": [
+    {
+      "name": "sunward",
+      "texel": false,
+      "warmthDelta": 29.67190624988629
+    },
+    {
+      "name": "away",
+      "texel": false,
+      "warmthDelta": 3.9022695310632116
+    },
+    {
+      "name": "overcast",
+      "texel": false,
+      "warmthDelta": 3.6995507812856374
+    },
+    {
+      "name": "day",
+      "texel": false,
+      "warmthDelta": 0
+    },
+    {
+      "name": "night",
+      "texel": false,
+      "warmthDelta": 0
+    },
+    {
+      "name": "reflection",
+      "texel": false,
+      "warmthDelta": 34.10505859375251
+    },
+    {
+      "name": "water-overcast",
+      "texel": false,
+      "warmthDelta": 5.540343750013683
+    },
+    {
+      "name": "water-night",
+      "texel": false,
+      "warmthDelta": 0
+    },
+    {
+      "name": "sunward",
+      "texel": true,
+      "warmthDelta": 29.712742187410527
+    },
+    {
+      "name": "away",
+      "texel": true,
+      "warmthDelta": 3.902867187310278
+    },
+    {
+      "name": "overcast",
+      "texel": true,
+      "warmthDelta": 3.6884179687903327
+    },
+    {
+      "name": "day",
+      "texel": true,
+      "warmthDelta": 0
+    },
+    {
+      "name": "night",
+      "texel": true,
+      "warmthDelta": 0
+    },
+    {
+      "name": "reflection",
+      "texel": true,
+      "warmthDelta": 34.33596484375327
+    },
+    {
+      "name": "water-overcast",
+      "texel": true,
+      "warmthDelta": 5.584023437514169
+    },
+    {
+      "name": "water-night",
+      "texel": true,
+      "warmthDelta": 0
+    }
+  ],
+  "errors": [],
+  "failures": []
+}

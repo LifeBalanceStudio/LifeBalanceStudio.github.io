@@ -1,0 +1,234 @@
+{
+  "checkedAt": "2026-09-12T03:31:13.932Z",
+  "fixture": {
+    "first": [
+      193,
+      197,
+      194,
+      255
+    ],
+    "rotated": [
+      193,
+      197,
+      194,
+      255
+    ],
+    "translated": [
+      193,
+      197,
+      194,
+      255
+    ],
+    "refreshed": [
+      193,
+      197,
+      194,
+      255
+    ],
+    "withinCell": {
+      "enabled": true,
+      "resolution": 384,
+      "origin": [
+        0,
+        1.25,
+        1.25
+      ],
+      "captureCount": 3,
+      "eyeCaptureCount": 3,
+      "probeCount": 3
+    },
+    "nextCell": {
+      "enabled": true,
+      "resolution": 384,
+      "origin": [
+        0.25,
+        1.25,
+        1.25
+      ],
+      "captureCount": 5,
+      "eyeCaptureCount": 5,
+      "probeCount": 3
+    },
+    "beforeOcclusion": [
+      193,
+      197,
+      194,
+      255
+    ],
+    "occluded": [
+      240,
+      72,
+      35,
+      255
+    ],
+    "revealed": [
+      193,
+      197,
+      194,
+      255
+    ],
+    "sharp": [
+      104,
+      211,
+      240,
+      255
+    ],
+    "directSharp": [
+      104,
+      211,
+      240,
+      255
+    ],
+    "sharpCovered": [
+      240,
+      72,
+      35,
+      255
+    ],
+    "directCovered": [
+      240,
+      72,
+      35,
+      255
+    ],
+    "disocclusion": {
+      "sameNeighbourRatio": 0.3670886075949367,
+      "distinctColors": 51
+    },
+    "glError": 0
+  },
+  "room": {
+    "frames": [
+      {
+        "name": "room-night",
+        "state": {
+          "enabled": true,
+          "resolution": 384,
+          "origin": [
+            0,
+            1.25,
+            1.25
+          ],
+          "captureCount": 2,
+          "eyeCaptureCount": 2,
+          "probeCount": 3
+        }
+      },
+      {
+        "name": "room-night-original",
+        "state": {
+          "enabled": false,
+          "resolution": 384,
+          "origin": [
+            0,
+            1.25,
+            1.25
+          ],
+          "captureCount": 2,
+          "eyeCaptureCount": 2,
+          "probeCount": 3
+        }
+      },
+      {
+        "name": "window-day",
+        "state": {
+          "enabled": true,
+          "resolution": 384,
+          "origin": [
+            -0.25,
+            1.25,
+            -1.5
+          ],
+          "captureCount": 4,
+          "eyeCaptureCount": 4,
+          "probeCount": 3
+        }
+      },
+      {
+        "name": "window-day-original",
+        "state": {
+          "enabled": false,
+          "resolution": 384,
+          "origin": [
+            -0.25,
+            1.25,
+            -1.5
+          ],
+          "captureCount": 4,
+          "eyeCaptureCount": 4,
+          "probeCount": 3
+        }
+      },
+      {
+        "name": "window-depth-control",
+        "state": {
+          "enabled": true,
+          "resolution": 384,
+          "origin": [
+            -0.25,
+            1.25,
+            -1.5
+          ],
+          "captureCount": 6,
+          "eyeCaptureCount": 6,
+          "probeCount": 3
+        }
+      },
+      {
+        "name": "blind-closed",
+        "state": {
+          "enabled": true,
+          "resolution": 384,
+          "origin": [
+            0,
+            1.25,
+            1.25
+          ],
+          "captureCount": 8,
+          "eyeCaptureCount": 8,
+          "probeCount": 3
+        }
+      },
+      {
+        "name": "tv-menu",
+        "state": {
+          "enabled": true,
+          "resolution": 384,
+          "origin": [
+            0.25,
+            1,
+            -0.25
+          ],
+          "captureCount": 10,
+          "eyeCaptureCount": 10,
+          "probeCount": 3
+        }
+      }
+    ],
+    "glError": 0,
+    "meshes": 170
+  },
+  "runtime": [
+    {
+      "seoulHour": 12,
+      "status": 200
+    },
+    {
+      "seoulHour": 21,
+      "status": 200
+    }
+  ],
+  "optionChecks": {
+    "defaultOff": true,
+    "checkboxOn": true,
+    "rememberOn": true,
+    "shortcutOffWhileFocused": true,
+    "nativeSpaceOn": true,
+    "rememberOff": true,
+    "comparisonLinkOn": true,
+    "comparisonOverrideCleared": true,
+    "rememberOffAfterComparison": true
+  },
+  "errors": [],
+  "failures": []
+}
