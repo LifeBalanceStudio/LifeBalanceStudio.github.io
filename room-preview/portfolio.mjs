@@ -29,7 +29,7 @@ export const MENU_PAGE_SIZE = 10;
 export const MENU_WIDTH = 256;
 export const MENU_HEIGHT = 240;
 
-export function createTVMenu(canvas, onChange, items = games) {
+export function createTVMenu(canvas, onChange, items = games, onSound = () => {}) {
   const context = canvas.getContext('2d');
   let active = false;
   let stage = 'pages';
@@ -180,9 +180,11 @@ export function createTVMenu(canvas, onChange, items = games) {
 
   function turnDetail(offset) {
     if (!active || stage !== 'detail' || !hasFeatures()) return false;
+    const previous = detailPage;
     detailPage = (detailPage + offset % 2 + 2) % 2;
     detailScroll = 0;
     draw();
+    if (detailPage !== previous) onSound('move');
     return true;
   }
 
@@ -193,6 +195,7 @@ export function createTVMenu(canvas, onChange, items = games) {
     else if (stage === 'detail') return turnDetail(1);
     else return false;
     draw();
+    onSound('confirm');
     return true;
   }
 
@@ -211,12 +214,14 @@ export function createTVMenu(canvas, onChange, items = games) {
     setActive(value) { active = value; stage = 'pages'; row = 0; detailPage = 0; detailScroll = 0; draw(); },
     select(offset) {
       if (!active) return;
+      const previous = [page, row, detailScroll].join(':');
       if (stage === 'pages') page = (page + offset % pageCount + pageCount) % pageCount;
       else if (stage === 'games') {
         const count = entries().length;
         if (count) row = (row + offset % count + count) % count;
       } else detailScroll = Math.max(0, Math.min(detailScroll + offset, detailLines.length - 8));
       draw();
+      if (previous !== [page, row, detailScroll].join(':')) onSound('move');
     },
     choose,
     turnDetail,
@@ -225,6 +230,7 @@ export function createTVMenu(canvas, onChange, items = games) {
       else if (stage === 'games') stage = 'pages';
       else return false;
       draw();
+      onSound('back');
       return true;
     },
     hit(u, v) {

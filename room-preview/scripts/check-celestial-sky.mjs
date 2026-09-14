@@ -60,7 +60,7 @@ try {
       // 위상 면적 검사는 노을색이 밝기 판정에 섞이지 않는 동일한 밤 배경에서 수행한다.
       uniforms.uSunset.value = 0;
       camera.fov = 7; camera.updateProjectionMatrix(); camera.lookAt(moon.direction); const pixels = render(false); picture('moon-' + name);
-      const radius = Math.tan(Math.asin(0.02443)) * 320 / Math.tan(THREE.MathUtils.degToRad(3.5));
+      const radius = Math.tan(Math.asin(0.04885)) * 320 / Math.tan(THREE.MathUtils.degToRad(3.5));
       let lit = 0, area = 0;
       for (let y = 0; y < 640; y++) for (let x = 0; x < 640; x++) if (Math.hypot(x + 0.5 - 320, y + 0.5 - 320) < radius) {
         area++; if (brightness(pixels, (y * 640 + x) * 4) > 110) lit++;
@@ -89,13 +89,17 @@ try {
 
       const full = new Date('2026-09-27T00:00:00+09:00'); sky.setTime(full, { day: 0 }); uniforms.uStars.value = 0;
       const direction = uniforms.uMoon.value.clone(); camera.fov = 7; camera.updateProjectionMatrix(); camera.lookAt(direction);
-      function moonSignal(cover, name) {
-        weather(cover); uniforms.uMoon.value.copy(direction); const lit = render(texel);
+      function moonSignal(cover, name, wind = 0, seconds = 30) {
+        weather(cover, wind, seconds); uniforms.uMoon.value.copy(direction); const lit = render(texel);
         if (name) picture(name + (texel ? '-texel' : ''));
         uniforms.uMoon.value.set(0, -1, 0); return signal(lit, render(texel));
       }
-      const moonClear = moonSignal(0), moonCloud = moonSignal(0.8, 'moon-clouds'), moonOvercast = moonSignal(1, 'moon-overcast');
-      moons.push({ texel, clearFlux: moonClear.flux, cloudFluxRatio: moonCloud.flux / moonClear.flux, overcastFluxRatio: moonOvercast.flux / moonClear.flux });
+      const moonClear = moonSignal(0), cloudRatios = [];
+      // 구름 사이의 빈 곳에 달이 놓일 수 있으므로 이동 중 가려지고 다시 드러나는지를 확인한다.
+      for (let i = 0; i < 8; i++) cloudRatios.push(moonSignal(0.8, i === 0 ? 'moon-clouds' : null, 2, 120).flux / moonClear.flux);
+      const moonOvercast = moonSignal(1, 'moon-overcast');
+      moons.push({ texel, clearFlux: moonClear.flux, cloudFluxRatio: Math.min(...cloudRatios), cloudMaxFluxRatio: Math.max(...cloudRatios),
+        cloudRatios, overcastFluxRatio: moonOvercast.flux / moonClear.flux });
       camera.fov = 70; camera.updateProjectionMatrix(); camera.lookAt(0, 0.6, 0.8);
     }
     const glError = gl.getError(); effect.dispose(); renderer.dispose(); sky.mesh.geometry.dispose(); sky.mesh.material.dispose();
@@ -110,7 +114,7 @@ try {
     if (stars.overcastFluxRatio > 0.01) failures.push('흐림에서 별이 남아 있음');
   }
   for (const moon of result.moons) {
-    if (!(moon.cloudFluxRatio > 0.005 && moon.cloudFluxRatio < 0.95)) failures.push('부분 구름이 달을 가리지 못함');
+    if (!(moon.cloudFluxRatio < 0.95 && moon.cloudMaxFluxRatio > 0.005 && moon.cloudMaxFluxRatio - moon.cloudFluxRatio > 0.05)) failures.push('이동하는 부분 구름에 따른 달 가림 변화가 없음');
     if (moon.overcastFluxRatio > 0.01) failures.push('흐림에서 달이 남아 있음');
   }
   if (result.glError) failures.push('하늘 WebGL 오류');

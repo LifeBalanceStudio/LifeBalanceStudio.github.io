@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { Color } from 'three';
 import { DEFAULT_WEATHER, WEATHER_CACHE_KEY, WEATHER_REFRESH_MS, createSeoulWeather, parseSeoulForecast, weatherEndpoint } from '../seoul-weather.mjs';
 import { createWeatherSky, seoulSunDirection, seoulMoonState } from '../weather-sky.mjs';
+import { seoulDaylight } from '../mood-light.mjs';
 
 const time = Date.parse('2026-09-12T03:30:00Z');
 function forecast(cover = 95) {
@@ -120,7 +121,36 @@ test('달의 날짜별 위상은 신월·초승·상현·보름·하현·그믐�
   }
   sky.setTime(new Date('2026-09-15T15:00:00+09:00'), { day: 1 });
   assert.equal(sky.mesh.material.uniforms.uStars.value, 0, '밝은 낮에는 별을 표시하지 않는다');
-  assert.ok(sky.state.moonDirection[1] > 0, '실제 위치가 지평선 위라면 낮의 달도 계산한다');
+  assert.deepEqual(sky.state.moonDirection, [0, -1, 0], '낮의 달은 표시 경로에서 제외한다');
+  sky.mesh.geometry.dispose(); sky.mesh.material.dispose();
+});
+
+test('달은 서울의 밤 동안 창 정면의 동쪽·남쪽·서쪽 경로를 따라간다', () => {
+  const today = seoulDaylight(new Date('2026-09-14T12:00:00+09:00'));
+  const tomorrow = seoulDaylight(new Date('2026-09-15T12:00:00+09:00'));
+  const points = [0.25, 0.5, 0.75].map(progress => seoulMoonState(new Date(today.sunset + progress * (tomorrow.sunrise - today.sunset))).direction);
+  assert.ok(points[0].x < 0 && points[2].x > 0);
+  for (const point of points) assert.ok(point.y > 0 && point.z < 0);
+  assert.ok(Math.abs(points[1].x) < 0.000001);
+  assert.ok(Math.abs(Math.asin(points[1].y) * 180 / Math.PI - 48) < 0.000001);
+  for (const progress of [0.01, 0.25, 0.75, 0.99]) {
+    const point = seoulMoonState(new Date(today.sunset + progress * (tomorrow.sunrise - today.sunset))).direction;
+    assert.ok(Math.abs(Math.atan2(point.x, -point.z) * 180 / Math.PI) <= 60);
+    assert.ok(Math.asin(point.y) * 180 / Math.PI >= 12);
+  }
+  assert.ok(seoulMoonState(new Date('2026-09-14T23:59:00+09:00')).direction.y > 0.5);
+});
+
+test('자정을 넘겨도 달의 위치와 위상 방향이 연속적이다', () => {
+  const before = seoulMoonState(new Date('2026-09-14T23:59:59+09:00'));
+  const after = seoulMoonState(new Date('2026-09-15T00:00:01+09:00'));
+  assert.ok(before.direction.distanceTo(after.direction) < 0.001);
+  const sky = createWeatherSky(new Color(), new Color());
+  for (const date of ['2026-09-14T22:00:00+09:00', '2026-09-15T02:00:00+09:00', '2026-10-07T23:59:00+09:00']) {
+    const time = new Date(date), moon = seoulMoonState(time);
+    sky.setTime(time, { day: 0 });
+    assert.equal(Math.sign(sky.mesh.material.uniforms.uMoonLight.value.x), moon.waxing ? 1 : -1);
+  }
   sky.mesh.geometry.dispose(); sky.mesh.material.dispose();
 });
 

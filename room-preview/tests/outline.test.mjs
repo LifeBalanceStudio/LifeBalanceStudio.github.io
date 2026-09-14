@@ -3,6 +3,20 @@ import assert from 'node:assert/strict';
 import { BoxGeometry, Color, Group, Mesh, MeshBasicMaterial, NormalBlending, PerspectiveCamera, Scene, UnsignedByteType } from 'three';
 import { createInteractionOutline, outlinePulse } from '../outline.mjs';
 
+test('방 전용 아웃라인 레이어는 기본 표시와 외부 레이어를 보존하고 정리된다', () => {
+  const scene = new Scene(), camera = new PerspectiveCamera(), room = new Group();
+  const object = new Mesh(new BoxGeometry(), new MeshBasicMaterial());
+  object.layers.enable(4); room.add(object); scene.add(room);
+  const outside = new Mesh(new BoxGeometry(), new MeshBasicMaterial()); scene.add(outside);
+  const original = object.layers.mask, cameraMask = camera.layers.mask;
+  const outline = createInteractionOutline({}, scene, camera);
+  outline.setTargets([{ outlineObjects: [object] }], room); outline.setMode('explore');
+  assert.equal(object.layers.isEnabled(1), true); assert.equal(object.layers.isEnabled(0), true);
+  assert.equal(outside.layers.isEnabled(1), false); assert.equal(camera.layers.mask, cameraMask);
+  assert.equal(outline.selectedObjects.length, 1);
+  outline.dispose(); assert.equal(object.layers.mask, original);
+});
+
 function fixture() {
   const scene = new Scene();
   scene.background = new Color('#102030');

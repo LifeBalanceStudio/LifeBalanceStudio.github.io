@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { Box3, BoxGeometry, Mesh, MeshBasicMaterial, Ray, Raycaster, Texture, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { bindRoom, movementInput, normalizeMouseSensitivity, moveCircle, collisionPush, blindPose, nearestInteraction, visibleInteraction, START, ROOM_BOUNDS, PLAYER_RADIUS } from '../world.mjs';
+import { bindRoom, movementInput, normalizeMouseSensitivity, normalizeFpsLimit, moveCircle, collisionPush, blindPose, nearestInteraction, visibleInteraction, START, ROOM_BOUNDS, PLAYER_RADIUS, PLAYER_SPEED } from '../world.mjs';
 
 // 브라우저나 GPU를 사용하지 않고 실제 GLB의 기하·변환을 검사한다.
 globalThis.self = globalThis;
@@ -12,6 +12,14 @@ loader.register(() => ({ name: '검증용_텍스처생략', loadTexture: () => P
 const buffer = await fs.readFile(new URL('../assets/room.glb', import.meta.url));
 const gltf = await loader.parseAsync(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength), '');
 const bindings = bindRoom(gltf.scene);
+
+test('FPS 상한은 기본 60을 사용하며 30~120의 정수로 제한한다', () => {
+  for (const value of [undefined, null, NaN, Infinity, '120']) assert.equal(normalizeFpsLimit(value), 60);
+  assert.equal(normalizeFpsLimit(20), 30);
+  assert.equal(normalizeFpsLimit(144), 120);
+  assert.equal(normalizeFpsLimit(74.6), 75);
+  assert.equal(normalizeFpsLimit(120), 120);
+});
 
 test('실제 모델에서 상호작용 대상과 회전된 가구 충돌 범위를 만든다', () => {
   assert.deepEqual(bindings.targets.map(target => target.id), ['tv', 'blind', 'lamp', 'ceiling-light', 'ceiling-switch']);
@@ -85,11 +93,39 @@ test('열린 현관문 너머는 이동 가능한 위치에서 비스듬히 보�
   assert.ok(blocked > 20);
 });
 
-test('시작 위치는 가구 안이 아니며 긴 프레임에서도 이동량을 제한한다', () => {
+test('시작 위치는 가구 안이 아니다', () => {
   for (const obstacle of bindings.obstacles) assert.equal(collisionPush(START, obstacle), null, obstacle.name);
-  const normal = movementInput(1, 0, 0, 0.05);
-  const longFrame = movementInput(1, 0, 0, 4);
-  assert.deepEqual(normal, longFrame);
+});
+
+test('1~120FPS에서 실제 방 통로의 1초 이동 거리가 일정하다', () => {
+  for (const fps of [1, 3, 5, 10, 15, 30, 60, 120]) {
+    let position = { ...START };
+    for (let frame = 0; frame < fps; frame++) position = moveCircle(position, movementInput(1, 0, 0, 1 / fps), bindings.obstacles);
+    assert.ok(Math.abs(START.z - position.z - PLAYER_SPEED) < 1e-8, fps + 'FPS');
+    assert.ok(Math.abs(position.x - START.x) < 1e-8);
+    for (const obstacle of bindings.obstacles) assert.equal(collisionPush(position, obstacle, PLAYER_RADIUS - 0.001), null);
+  }
+});
+
+test('프레임 간격이 흔들려도 경과한 1초만큼 이동한다', () => {
+  let position = { ...START };
+  for (const seconds of [0.016, 0.18, 0.042, 0.11, 0.25, 0.067, 0.035, 0.3]) {
+    position = moveCircle(position, movementInput(1, 0, 0, seconds), bindings.obstacles);
+  }
+  assert.ok(Math.abs(START.z - position.z - PLAYER_SPEED) < 1e-8);
+});
+
+test('유효한 긴 프레임은 반영하고 비정상 값과 긴 중단 시간은 이동에서 제외한다', () => {
+  assert.equal(Math.abs(movementInput(1, 0, 0, 0.5).z), PLAYER_SPEED * 0.5);
+  for (const seconds of [0, -1, NaN, Infinity, 60]) assert.deepEqual(movementInput(1, 0, 0, seconds), { x: 0, z: 0 });
+});
+
+test('한 프레임의 이동이 커도 얇은 충돌 벽을 반대편으로 통과하지 않는다', () => {
+  const wall = { x: 0, z: 0, axes: [{ x: 1, z: 0, half: 0.6 }, { x: 0, z: 1, half: 0.005 }] };
+  for (const side of [-1, 1]) {
+    const moved = moveCircle({ x: 0, z: side }, { x: 0, z: -side * 3 }, [wall]);
+    assert.ok(moved.z * side >= PLAYER_RADIUS + 0.005 - 1e-6);
+  }
 });
 
 test('큰 이동량으로도 가구를 관통하거나 방 경계를 벗어나지 않는다', () => {

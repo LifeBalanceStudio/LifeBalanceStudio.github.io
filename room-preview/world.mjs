@@ -12,6 +12,10 @@ export function normalizeMouseSensitivity(value) {
   return typeof value === 'number' && Number.isFinite(value) ? Math.round(clamp(value, 0.25, 2) * 100) / 100 : 1;
 }
 
+export function normalizeFpsLimit(value) {
+  return Number.isFinite(value) ? Math.round(Math.max(30, Math.min(120, value))) : 60;
+}
+
 export function bindRoom(root) {
   root.updateMatrixWorld(true);
   const required = name => {
@@ -67,8 +71,10 @@ export function bindRoom(root) {
 }
 
 export function movementInput(forward, right, yaw, seconds, speed = PLAYER_SPEED) {
+  // 5초가 넘는 정지는 연속 이동이 아닌 시간 건너뜀으로 취급한다.
+  if (!Number.isFinite(seconds) || seconds <= 0 || seconds > 5) return { x: 0, z: 0 };
   const length = Math.max(1, Math.hypot(forward, right));
-  const distance = speed * Math.min(Math.max(seconds, 0), 0.05);
+  const distance = speed * seconds;
   return {
     x: (-Math.sin(yaw) * forward + Math.cos(yaw) * right) / length * distance,
     z: (-Math.cos(yaw) * forward - Math.sin(yaw) * right) / length * distance
@@ -163,12 +169,30 @@ export function nearestInteraction(ray, targets, maxDistance = 2.05) {
   return result;
 }
 
-export function visibleInteraction(raycaster, targets, meshes, owners) {
-  const result = nearestInteraction(raycaster.ray, targets);
+export function visibleInteraction(raycaster, targets, meshes, owners, maxDistance = 2.05) {
+  const result = nearestInteraction(raycaster.ray, targets, maxDistance);
   if (!result) return null;
   const obstruction = raycaster.intersectObjects(meshes, false)[0];
   if (obstruction && obstruction.distance + 0.10 < result.distance && owners.get(obstruction.object) !== result.target.id) return null;
   return result.target;
+}
+
+export function touchInteraction(raycaster, targets, meshes, owners, paddingPerDistance) {
+  const far = raycaster.far;
+  raycaster.far = Infinity;
+  try {
+    const direct = visibleInteraction(raycaster, targets, meshes, owners);
+    if (direct) return { target: direct, inRange: true };
+    // 작은 줄과 스위치는 터치할 때만 판정을 넓힌다. 모델과 PC의 사용 거리는 바꾸지 않는다.
+    const expanded = targets.filter(target => target.box.distanceToPoint(raycaster.ray.origin) <= 2.05).map(target => ({
+      ...target, source: target,
+      box: target.box.clone().expandByScalar(Math.min(0.16, target.box.distanceToPoint(raycaster.ray.origin) * paddingPerDistance))
+    }));
+    const assisted = visibleInteraction(raycaster, expanded, meshes, owners);
+    if (assisted) return { target: assisted.source, inRange: true };
+    const distant = visibleInteraction(raycaster, targets, meshes, owners, Infinity);
+    return distant ? { target: distant, inRange: false } : null;
+  } finally { raycaster.far = far; }
 }
 
 export function easeInOut(value) {

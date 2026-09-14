@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { getPosition, getMoonPosition, getMoonIllumination } from './vendor/suncalc/index.js';
+import { getPosition, getMoonIllumination } from './vendor/suncalc/index.js';
 import { DEFAULT_WEATHER } from './seoul-weather.mjs';
+import { seoulDaylight } from './mood-light.mjs';
 import { sunsetStrength, SUNSET_GLSL } from './sunset.mjs';
 
 function skyDirection(position, target) {
@@ -15,8 +16,20 @@ export function seoulSunDirection(date, target = new THREE.Vector3()) {
 }
 
 export function seoulMoonState(date, target = new THREE.Vector3()) {
-  const position = getMoonPosition(date, 37.5665, 126.9780), illumination = getMoonIllumination(date);
-  return { direction: skyDirection(position, target), fraction: illumination.fraction, phase: illumination.phase, waxing: illumination.waxing };
+  const illumination = getMoonIllumination(date), today = seoulDaylight(date), time = date.getTime();
+  if (time >= today.sunrise && time < today.sunset) target.set(0, -1, 0);
+  else {
+    // 달은 밤 동안 동쪽 앞에서 서쪽 앞으로 이동한다. 자정에도 같은 밤을 이어 간다.
+    const beforeSunrise = time < today.sunrise;
+    const sunset = beforeSunrise ? seoulDaylight(new Date(time - 86400000)).sunset : today.sunset;
+    const nextSunrise = beforeSunrise ? today.sunrise : seoulDaylight(new Date(time + 86400000)).sunrise;
+    const progress = THREE.MathUtils.clamp((time - sunset) / (nextSunrise - sunset), 0, 1);
+    // 창가에서 창틀·천장을 피하도록 정면 기준 좌우 60°, 고도 12~48°의 호를 사용한다.
+    const side = THREE.MathUtils.degToRad(-60 + 120 * progress);
+    const altitude = THREE.MathUtils.degToRad(12 + 36 * Math.sin(Math.PI * progress));
+    target.set(Math.sin(side) * Math.cos(altitude), Math.sin(altitude), -Math.cos(side) * Math.cos(altitude));
+  }
+  return { direction: target, fraction: illumination.fraction, phase: illumination.phase, waxing: illumination.waxing };
 }
 
 export function createWeatherSky(top, horizon) {
@@ -87,19 +100,21 @@ export function createWeatherSky(top, horizon) {
         if (uStars > 0.0 && celestialVisibility > 0.0) color += stars(direction) * uStars * celestialVisibility;
         float sunAngle = dot(direction, uSun);
         float sunVisible = smoothstep(-0.025, 0.025, uSun.y);
-        // 먼 하늘에서도 식별되는 약 2.4° 크기의 연출용 태양이다.
-        float sun = smoothstep(0.99973, 0.99982, sunAngle) * sunVisible;
-        float halo = pow(max(sunAngle, 0.0), 280.0) * 0.22 * sunVisible;
+        // 실제 각크기보다 창가에서의 식별을 우선한 약 4.8° 지름의 태양이다.
+        float sun = smoothstep(0.99892015, 0.99928006, sunAngle) * sunVisible;
+        float halo = pow(max(sunAngle, 0.0), 70.0) * 0.22 * sunVisible;
         vec3 sunColor = mix(vec3(1.0, 0.37, 0.10), vec3(1.0, 0.91, 0.68), smoothstep(0.0, 0.35, uSun.y));
         color += sunColor * (sun * 3.8 + halo) * (1.0 - smoothstep(0.8, 1.0, uCover));
 
         float moonAngle = dot(direction, uMoon);
-        float moonVisible = smoothstep(-0.025, 0.025, uMoon.y) * smoothstep(-0.005, 0.012, direction.y) * celestialVisibility;
-        vec3 moonHalo = vec3(0.43, 0.52, 0.65) * pow(max(moonAngle, 0.0), 650.0) * uMoonFraction * moonVisible * (1.0 - uDay) * 0.055;
+        // 일출·일몰에서 uDay는 0.5다. 낮에는 달과 광륜을 숨기고 밤 쪽에서만 부드럽게 표시한다.
+        float moonNight = 1.0 - smoothstep(0.0, 0.5, uDay);
+        float moonVisible = smoothstep(-0.025, 0.025, uMoon.y) * smoothstep(-0.005, 0.012, direction.y) * celestialVisibility * moonNight;
+        vec3 moonHalo = vec3(0.43, 0.52, 0.65) * pow(max(moonAngle, 0.0), 162.5) * uMoonFraction * moonVisible * (1.0 - uDay) * 0.055;
         color += moonHalo;
         if (moonAngle > 0.998 && moonVisible > 0.0) {
-          // 약 2.8° 지름의 연출용 달이다. 구 표면을 비추는 태양 방향으로 초승·보름·그믐을 표현한다.
-          vec2 p = vec2(dot(direction, uMoonRight), dot(direction, uMoonUp)) / 0.02443;
+          // 약 5.6° 지름의 연출용 달이다. 날짜별 밝은 면의 비율로 초승·보름·그믐을 표현한다.
+          vec2 p = vec2(dot(direction, uMoonRight), dot(direction, uMoonUp)) / 0.04885;
           float radius2 = dot(p, p);
           float edge = max(fwidth(radius2), 0.004);
           float disc = (1.0 - smoothstep(1.0 - edge, 1.0 + edge, radius2)) * moonVisible;
@@ -164,9 +179,9 @@ export function createWeatherSky(top, horizon) {
       const right = uniforms.uMoonRight.value.crossVectors(moon.direction, up);
       if (right.lengthSq() < 0.000001) right.set(1, 0, 0);
       right.normalize(); uniforms.uMoonUp.value.crossVectors(right, moon.direction).normalize();
-      const x = uniforms.uSun.value.dot(right), y = uniforms.uSun.value.dot(uniforms.uMoonUp.value);
-      const z = 2 * moon.fraction - 1, tangent = Math.sqrt(Math.max(0, 1 - z * z)), length = Math.hypot(x, y);
-      uniforms.uMoonLight.value.set(length > 0.000001 ? x / length * tangent : tangent, length > 0.000001 ? y / length * tangent : 0, z);
+      // 연출 궤도에서는 실제 태양과의 각도 대신 차고 기우는 방향을 사용해 밝은 면의 뒤집힘을 막는다.
+      const z = 2 * moon.fraction - 1, tangent = Math.sqrt(Math.max(0, 1 - z * z));
+      uniforms.uMoonLight.value.set(moon.waxing ? tangent : -tangent, 0, z);
     },
     update(seconds) {
       const dt = Math.max(0, seconds);

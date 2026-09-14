@@ -49,10 +49,24 @@ export function createInteractionOutline(renderer, scene, camera) {
   let mode = 'loading';
   let objects = [];
   let elapsed = 0;
+  let roomOnly = false;
+  const roomLayer = 1, layerObjects = [];
+  const clearRoomLayer = () => {
+    for (const object of layerObjects) object.layers.disable(roomLayer);
+    layerObjects.length = 0;
+    roomOnly = false;
+  };
   const motionQuery = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   const syncSelection = () => { pass.selectedObjects = ['ready', 'explore', 'paused'].includes(mode) ? objects : []; };
   return {
-    setTargets(targets) {
+    setTargets(targets, roomRoot = null) {
+      clearRoomLayer();
+      if (roomRoot) {
+        roomRoot.traverse(object => {
+          if (!object.layers.isEnabled(roomLayer)) { object.layers.enable(roomLayer); layerObjects.push(object); }
+        });
+        roomOnly = true;
+      }
       objects = [...new Set(targets.flatMap(target => target.outlineObjects || []))];
       syncSelection();
     },
@@ -73,17 +87,21 @@ export function createInteractionOutline(renderer, scene, camera) {
       pass.edgeGlow = pulse.glow;
       const target = renderer.getRenderTarget();
       const autoUpdate = renderer.shadowMap.autoUpdate;
+      const cameraLayers = camera.layers.mask;
       renderer.shadowMap.autoUpdate = false;
+      // 상호작용 물체는 방 안에 있으므로 창밖 배경은 가림 계산에 필요하지 않다.
+      if (roomOnly) camera.layers.set(roomLayer);
       try {
         // 고정한 Three.js 0.186.0의 추가 합성 경로를 사용한다.
         // 기본 화면을 다시 복사하거나 톤 매핑하지 않고 테두리만 현재 타깃에 합성한다.
         pass.render(renderer, null, target, seconds, false);
       } finally {
+        camera.layers.mask = cameraLayers;
         renderer.shadowMap.autoUpdate = autoUpdate;
         renderer.setRenderTarget(target);
       }
     },
-    dispose() { pass.dispose(); },
+    dispose() { clearRoomLayer(); pass.dispose(); },
     get selectedObjects() { return pass.selectedObjects; }
   };
 }

@@ -1,0 +1,35 @@
+개발자의 방 — 음원 출처
+
+아래 파일은 모두 CC0 1.0으로 제공된 음원을 편집했습니다.
+이용 조건: https://creativecommons.org/publicdomain/zero/1.0/
+원본을 모노 22,050Hz로 변환하고 주파수·음량·반복 경계를 조정해 MP3로 압축했습니다.
+특정 서울 장소에서 직접 녹음한 자료가 아닌, 방의 분위기를 위한 연출용 음원입니다.
+
+rain.mp3
+원본: Rain on Window Loop / rain_on_window_loop.wav
+제작자: alxl
+출처: https://opengameart.org/content/rain-on-window-loop
+원문에서 CC0로도 이용할 수 있음을 명시하고 있습니다. CC0를 선택하여 사용합니다.
+
+wind.mp3
+원본: wind whoosh loop / wind woosh loop.ogg
+제작자: SketchMan3
+출처: https://opengameart.org/content/wind-whoosh-loop
+
+traffic.mp3
+원본: High traffic road sounds / gatve Varniu_2.ogg
+제작자: IgnasD
+출처: https://opengameart.org/content/high-traffic-road-sounds
+
+blind.mp3
+원본: Fabric Rustling / rustling.ogg
+제작자: Iochi Glaucus
+출처: https://opengameart.org/content/fabric-rustling
+여러 마찰음에서 짧은 구간을 골라 블라인드의 천과 줄이 움직이는 소리로 사용했습니다.
+
+switch.mp3
+원본: Interface Sounds / Audio/switch_001.ogg
+제작자: Kenney
+출처: https://kenney.nl/assets/interface-sounds
+
+CRT 메뉴 이동·선택·뒤로 가기 소리는 Web Audio API로 직접 합성합니다.

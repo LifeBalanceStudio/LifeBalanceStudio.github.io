@@ -17,7 +17,7 @@ globalThis.__controlsQA = {
   get state() { return { mode, yaw, pitch, mouseSensitivity, opening, openingTarget, keys: keys.size,
     lightOn: ceilingLamp?.on, intensity: ceilingLamp?.light.intensity, rocker: root?.getObjectByName('벽스위치_버튼')?.rotation.x,
     blindHeight: fabric?.scale.y, barY: bottomBar?.position.y, daylight: windowLight.intensity,
-    modal: blindDialog.open, locked: document.pointerLockElement === canvas }; },
+    modal: blindDialog.open, locked: document.pointerLockElement === canvas, pointerHandlerReady: mouseLocked }; },
   aim(id, position) {
     setMode('explore'); camera.position.fromArray(position);
     camera.lookAt(targets.find(target => target.id === id).box.getCenter(new THREE.Vector3()));
@@ -175,11 +175,14 @@ try {
   const lockedPage = await browser.newPage({ viewport: { width: 960, height: 600 } });
   await prepare(lockedPage, false);
   await lockedPage.locator('#enter-button').click();
-  await lockedPage.waitForFunction(() => document.pointerLockElement === document.querySelector('#view'));
-  const beforeLocked = await lockedPage.evaluate(() => __controlsQA.state);
-  await lockedPage.evaluate(() => document.dispatchEvent(new MouseEvent('mousemove', { movementX: 20, movementY: 0, bubbles: true })));
-  const afterLocked = await lockedPage.evaluate(() => __controlsQA.state);
-  assert.ok(Math.abs(afterLocked.yaw - beforeLocked.yaw + 20 * 0.0023) < 0.0001);
+  await lockedPage.waitForFunction(() => __controlsQA.state.locked && __controlsQA.state.pointerHandlerReady);
+  // 브라우저가 보내는 별도 마우스 이벤트가 측정 사이에 섞이지 않도록 한 번에 비교한다.
+  const { beforeLocked, afterLocked } = await lockedPage.evaluate(() => {
+    const beforeLocked = __controlsQA.state;
+    document.dispatchEvent(new MouseEvent('mousemove', { movementX: 20, movementY: 0, bubbles: true }));
+    return { beforeLocked, afterLocked: __controlsQA.state };
+  });
+  assert.ok(Math.abs(afterLocked.yaw - beforeLocked.yaw + 20 * 0.0023 * beforeLocked.mouseSensitivity) < 0.0001);
   await lockedPage.evaluate(() => __controlsQA.aim('blind', [0.08, 1.35, -1.6]));
   await lockedPage.keyboard.press('f');
   await lockedPage.waitForFunction(() => __controlsQA.state.modal && !document.pointerLockElement);

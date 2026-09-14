@@ -443,15 +443,21 @@ export function createExterior() {
     uniform float uGround;
     #include <fog_pars_vertex>
     void main() {
-      vec3 size = vec3(length(modelMatrix[0].xyz), length(modelMatrix[1].xyz), length(modelMatrix[2].xyz));
-      vec3 world = (modelMatrix * vec4(position, 1.0)).xyz;
+      mat4 objectMatrix = modelMatrix;
+      vec4 localPosition = vec4(position, 1.0);
+      #ifdef USE_INSTANCING
+        objectMatrix = modelMatrix * instanceMatrix;
+        localPosition = instanceMatrix * localPosition;
+      #endif
+      vec3 size = vec3(length(objectMatrix[0].xyz), length(objectMatrix[1].xyz), length(objectMatrix[2].xyz));
+      vec3 world = (objectMatrix * vec4(position, 1.0)).xyz;
       float width = mix(size.z, size.x, step(0.5, abs(normal.z)));
       vec2 measuredUv = vec2(uv.x * width / (uWindowPitch * 8.0), (world.y - uGround) / (0.9 * 16.0));
       vUv = mix(uv, measuredUv, uUseDimensions);
       vWall = step(abs(normal.y), 0.5);
-      vec3 n = normalize(mat3(modelMatrix) * normal);
+      vec3 n = normalize(mat3(objectMatrix) * normal);
       vShade = 0.56 + 0.44 * max(0.0, dot(n, normalize(vec3(-0.35, 0.8, 0.45))));
-      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+      vec4 mvPosition = modelViewMatrix * localPosition;
       gl_Position = projectionMatrix * mvPosition;
       #include <fog_vertex>
     }
@@ -474,10 +480,15 @@ export function createExterior() {
       #include <fog_fragment>
     }
   `;
-  const facade = (color, measured = true, pitch = 0.9) => new THREE.ShaderMaterial({
+  const facade = (color, measured = true, pitch = 0.9) => {
+    const value = new THREE.ShaderMaterial({
     uniforms: { ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog), uDay: dayUniform, uWindows: { value: windows }, uColor: { value: new THREE.Color(color) }, uUseDimensions: { value: measured ? 1 : 0 }, uWindowPitch: { value: pitch }, uGround: { value: ground } },
     vertexShader: facadeVertex, fragmentShader: facadeFragment, fog: true
-  });
+    });
+    // 개별 변환을 보존한 인스턴싱만 허용해 창문 간격과 음영을 유지한다.
+    value.userData.staticFacadeInstances = true;
+    return value;
+  };
   const facades = ['#b6bdb9', '#9baab0', '#a7afaf', '#bdb4a4', '#889da6'].map(color => facade(color));
   const officeFacades = ['#8cabb5', '#91a6ad', '#94a8ab', '#a4aca9', '#718f9d'].map(color => facade(color, true, 0.65));
   const parcels = [];

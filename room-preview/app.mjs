@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { START, PLAYER_HEIGHT, movementInput, normalizeMouseSensitivity, bindRoom, moveCircle, blindPose, visibleInteraction, easeInOut } from './world.mjs';
+import { START, PLAYER_HEIGHT, movementInput, normalizeMouseSensitivity, normalizeFpsLimit, bindRoom, moveCircle, blindPose, visibleInteraction, touchInteraction, easeInOut } from './world.mjs';
 import { createTVMenu } from './portfolio.mjs';
 import { createInteractionOutline } from './outline.mjs';
 import { createMoodLightController, createMoodLight } from './mood-light.mjs';
@@ -13,6 +13,11 @@ import { mountReviewMode } from './review-mode.mjs';
 import { createPrecipitation } from './precipitation.mjs';
 import { batchStaticExterior } from './static-batch.mjs';
 import { createStreetLife } from './street-life.mjs';
+import { AUDIO_DEFAULTS, normalizeAudioSettings, createRoomAudio } from './audio.mjs';
+import { mountGraphicsHelp } from './graphics-help.mjs';
+import { readGlbResponse, roomDownloadText } from './room-loading.mjs';
+import { createAutoQuality } from './auto-quality.mjs';
+import { createTouchControls, normalizeControlMode } from './touch-controls.mjs';
 
 const $ = selector => document.querySelector(selector);
 const canvas = $('#view');
@@ -30,7 +35,14 @@ const weatherPanel = $('#weather-panel');
 const weatherDescription = $('#weather-description');
 const trafficDescription = $('#traffic-description');
 const lowPowerInput = $('#low-power');
+const controlModeInput = $('#control-mode');
+const coarsePointer = matchMedia('(pointer: coarse)');
+const autoQualityInput = $('#auto-quality');
+const autoQualityStatus = $('#auto-quality-status');
+const autoQuality = createAutoQuality();
 const reducedMotionInput = $('#reduce-motion');
+const fpsLimitInput = $('#fps-limit');
+const fpsLimitOutput = $('#fps-limit-value');
 const sensitivityInput = $('#mouse-sensitivity');
 const sensitivityOutput = $('#mouse-sensitivity-value');
 const blindDialog = $('#blind-controls');
@@ -39,13 +51,22 @@ const blindOutput = $('#blind-opening-value');
 const preferencesKey = 'lifebalance.room.preferences.v1';
 const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
 let lowPower = false, reducedMotion = motionPreference.matches, motionOverride = false, mouseSensitivity = 1;
+let fpsLimit = 60;
+let autoQualityEnabled = true;
+let controlMode = 'auto', touchMode = false;
+let audioSettings = normalizeAudioSettings();
 try {
   const saved = JSON.parse(localStorage.getItem(preferencesKey) || 'null');
   lowPower = saved?.lowPower === true;
+  fpsLimit = normalizeFpsLimit(saved?.fpsLimit);
+  autoQualityEnabled = saved?.autoQuality !== false;
+  controlMode = normalizeControlMode(saved?.controlMode);
   mouseSensitivity = normalizeMouseSensitivity(saved?.mouseSensitivity);
+  audioSettings = normalizeAudioSettings(saved?.audio);
   if (typeof saved?.reducedMotion === 'boolean') { reducedMotion = saved.reducedMotion; motionOverride = true; }
 } catch { /* 저장소를 사용할 수 없어도 기본 설정으로 동작한다. */ }
 lowPowerInput.checked = lowPower; reducedMotionInput.checked = reducedMotion;
+autoQualityInput.checked = autoQualityEnabled;
 setMouseSensitivity(mouseSensitivity);
 const weatherClock = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false });
 const scene = new THREE.Scene();
@@ -71,11 +92,13 @@ let fabric;
 let bottomBar;
 let tvMenu;
 let renderer;
+let touchControls;
+let resizeFramePending = false;
 let interactionOutline;
 let texelSplat;
 const moodLightController = createMoodLightController();
 let review = null, reviewMoodLightController = createMoodLightController(), previousReviewTime = null;
-let liveWeather, liveTraffic;
+let liveWeather, liveTraffic, effectiveWeather, effectiveTraffic;
 let moodLamp;
 let ceilingLamp;
 let moodLampOn = null;
@@ -91,6 +114,18 @@ let explorationPose = null;
 let previousTime = performance.now();
 let nextRenderAt = 0;
 let noticeTimer;
+setFpsLimit(fpsLimit);
+const roomAudio = createRoomAudio({ settings: audioSettings, onStatus: message => { $('#sound-status').textContent = message; } });
+syncSoundSettings();
+if (audioSettings.enabled) $('#sound-status').textContent = '방에 입장하면 소리가 재생됩니다.';
+const graphicsHelp = mountGraphicsHelp({
+  onOpen: () => { keys.clear(); dragging = false; touchControls?.cancel(); pauseRoom(); },
+  onContinue: enterRoom,
+  onLowPower: () => { lowPowerInput.checked = true; applyViewPreferences(false); savePreferences(); enterRoom(); }
+});
+touchControls = createTouchControls({ canvas, container: $('#touch-controls'), stick: $('#move-stick'), knob: $('#stick-knob'),
+  pauseButton: $('#touch-pause'), onLook: (dx, dy) => rotateView(dx, dy, true), onTap: tapCanvas, onPause: pauseRoom });
+applyControlMode();
 
 function notice(message) {
   const element = $('#notice');
@@ -102,6 +137,15 @@ function notice(message) {
 
 function setMode(next) {
   mode = next;
+  clearTimeout(noticeTimer);
+  $('#notice').hidden = true;
+  if (next === 'ready' || next === 'paused') autoQuality.calibrate();
+  else autoQuality.reset();
+  previousTime = performance.now();
+  nextRenderAt = 0;
+  graphicsHelp.setMode(next);
+  roomAudio.setActive(!['loading', 'error'].includes(mode));
+  $('#sound-toggle').hidden = mode === 'error';
   if (mode !== 'blind' && blindDialog.open) blindDialog.close();
   interactionOutline?.setMode(next);
   syncTexelOption();
@@ -111,13 +155,52 @@ function setMode(next) {
   keys.clear();
   dragging = false;
   lastMouse = null;
+  syncTouchState();
   entry.hidden = !['loading', 'ready', 'error'].includes(mode);
   pausePanel.hidden = mode !== 'paused';
-  reticle.hidden = mode !== 'explore';
-  help.hidden = mode.startsWith('tv');
+  reticle.hidden = mode !== 'explore' || touchMode;
   tvControls.hidden = mode !== 'tv';
   actionPrompt.hidden = true;
 }
+
+function roomInstructions() {
+  return touchMode
+    ? '왼쪽 스틱으로 이동하고 화면을 드래그해 둘러보세요. 가까운 게임기, 블라인드 줄, 조명과 스위치는 직접 터치해 사용할 수 있습니다.'
+    : 'WASD로 이동하고 마우스로 둘러보세요. 게임기, 블라인드 줄, 무드등, 천장등과 문 옆 스위치는 F 또는 Space로 사용할 수 있습니다.';
+}
+function syncControlHelp() {
+  $('#move-help').innerHTML = touchMode ? '왼쪽 스틱 · 이동' : '<kbd>WASD</kbd> 이동';
+  $('#look-help').textContent = touchMode ? '화면 드래그 · 시야' : mouseLocked ? '마우스로 둘러보기' : '마우스 드래그로 둘러보기';
+  $('#interact-help').innerHTML = touchMode ? '물체 탭 · 사용' : '<kbd>F</kbd> / <kbd>Space</kbd> 사용';
+  $('#pause-help').hidden = touchMode;
+  canvas.setAttribute('aria-label', touchMode ? '3D 방. 왼쪽 스틱으로 이동하고 화면을 드래그하거나 물체를 터치합니다.' : '3D 방. WASD로 이동하고 마우스로 둘러봅니다.');
+}
+function syncTouchState() {
+  const controlState = $('#view-settings').open ? 'settings' : mode;
+  touchControls?.setMode(controlState);
+  help.hidden = mode.startsWith('tv') || (touchMode && controlState !== 'explore');
+}
+function applyControlMode(save = false) {
+  touchMode = controlMode === 'touch' || (controlMode === 'auto' && coarsePointer.matches);
+  controlModeInput.value = controlMode;
+  $('#room').dataset.inputMode = touchMode ? 'touch' : 'keyboard';
+  $('#control-mode-status').textContent = '현재 ' + (touchMode ? '터치 조작' : '키보드·마우스 조작') + (controlMode === 'auto' ? ' · 자동 선택' : ' · 직접 선택');
+  $('#sensitivity-label').textContent = touchMode ? '터치 시야 감도' : '마우스 감도';
+  $('#mouse-sensitivity-help').textContent = touchMode ? '화면을 드래그해 둘러보는 속도입니다.' : '마우스와 드래그로 둘러보는 속도입니다.';
+  keys.clear(); dragging = false; lastMouse = null;
+  touchControls.setEnabled(touchMode); syncTouchState(); syncControlHelp();
+  reticle.hidden = mode !== 'explore' || touchMode;
+  actionPrompt.hidden = true;
+  if (touchMode && document.pointerLockElement === canvas) document.exitPointerLock();
+  if (mode === 'ready') description.textContent = roomInstructions();
+  if (save) savePreferences();
+}
+controlModeInput.addEventListener('change', () => { controlMode = normalizeControlMode(controlModeInput.value); applyControlMode(true); });
+coarsePointer.addEventListener('change', () => { if (controlMode === 'auto') applyControlMode(); });
+$('#view-settings').addEventListener('toggle', () => {
+  keys.clear(); syncTouchState();
+  if (!$('#view-settings').open && mode === 'explore') canvas.focus({ preventScroll: true });
+});
 
 function fatal(message, error) {
   setMode('error');
@@ -130,6 +213,7 @@ function fatal(message, error) {
 
 try {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  graphicsHelp.setRenderer(renderer.getContext());
   renderer.setPixelRatio(Math.min(devicePixelRatio, lowPower ? 1 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
@@ -143,6 +227,7 @@ try {
   texelSplat.setEnabled(forcedRender === 'texel' || (forcedRender !== 'original' && savedTexel));
   syncTexelOption();
 } catch (error) {
+  graphicsHelp.unavailable();
   fatal('이 브라우저에서 3D 화면을 시작할 수 없습니다. 그래픽 가속을 사용할 수 있는 브라우저에서 다시 열어 주세요.', error);
 }
 
@@ -157,6 +242,8 @@ Object.assign(windowLight.shadow.camera, { left: -3, right: 3, top: 3, bottom: -
 windowLight.shadow.camera.updateProjectionMatrix();
 windowLight.shadow.bias = -0.0004;
 windowLight.shadow.normalBias = 0.015;
+windowLight.shadow.autoUpdate = false;
+windowLight.shadow.needsUpdate = true;
 scene.add(windowLight, windowLight.target);
 const exterior = createExterior();
 scene.add(exterior.root);
@@ -175,6 +262,7 @@ try { weatherStorage = localStorage; } catch { /* 저장이 제한되어도 예�
 function applyEnvironmentWeather() {
   const weather = review?.resolveWeather(liveWeather) || liveWeather;
   if (!weather) return;
+  effectiveWeather = weather;
   exterior.setWeather(weather);
   precipitation.setWeather(weather);
   const prefix = review?.state.active ? weather.source === 'review' ? '검수 · ' : '검수 · 현재 예보: ' : '서울 · ';
@@ -188,6 +276,7 @@ function applyEnvironmentTraffic(immediate = false) {
   const previewTime = review?.state.fixedTime != null;
   const traffic = previewTime ? scheduledTraffic(review.state.fixedTime) : liveTraffic;
   if (!traffic) return;
+  effectiveTraffic = traffic;
   streetLife.setTraffic(traffic, immediate);
   const source = { schedule: '시간대 연출', live: '교통 자료', stored: '최근 자료' }[traffic.source];
   const level = traffic.rush > 0.95 ? '러시아워' : traffic.rush > 0.02 ? '혼잡 변화 중' : traffic.bridge <= 2 ? '통행 적음' : '통행 보통';
@@ -208,7 +297,7 @@ function applyEnvironmentTime() {
 const seoulWeather = createSeoulWeather({ storage: weatherStorage, onChange: weather => { liveWeather = weather; applyEnvironmentWeather(); } });
 const seoulTraffic = createSeoulTraffic({ storage: weatherStorage, onChange: traffic => { liveTraffic = traffic; applyEnvironmentTraffic(); } });
 if (renderer) {
-  review = mountReviewMode({ onFocus: () => { keys.clear(); dragging = false; }, onChange: state => {
+  review = mountReviewMode({ onFocus: () => { keys.clear(); dragging = false; touchControls.cancel(); }, onChange: state => {
     if (state.fixedTime !== previousReviewTime) { reviewMoodLightController = createMoodLightController(); previousReviewTime = state.fixedTime; }
     if (!state.active) { seoulWeather.refresh(); seoulTraffic.refresh(); }
     applyEnvironmentTime(); applyEnvironmentWeather(); applyEnvironmentTraffic(true);
@@ -232,20 +321,40 @@ function resize() {
   if (!renderer) return;
   const width = Math.max(1, canvas.clientWidth);
   const height = Math.max(1, canvas.clientHeight);
+  const pixelRatio = Math.min(devicePixelRatio, lowPower ? 1 : 1.75) * (autoQualityEnabled ? autoQuality.scale : 1);
+  if (renderer.getPixelRatio() !== pixelRatio) renderer.setPixelRatio(pixelRatio);
   renderer.setSize(width, height, false);
+  resizeFramePending = true;
   texelSplat?.resize();
   interactionOutline?.resize(width, height);
   camera.aspect = width / height;
+  if (screen && mode === 'tv') camera.position.copy(tvViewPosition());
+  else if (screen && mode === 'tv-enter' && cameraTween) cameraTween.position.copy(tvViewPosition());
   camera.updateProjectionMatrix();
 }
-addEventListener('resize', resize);
+addEventListener('resize', () => { autoQuality.calibrate(); touchControls.cancel(); resize(); });
 resize();
+
+function syncAutoQuality() {
+  autoQualityStatus.textContent = autoQualityEnabled
+    ? '자동 조절 중 · 기본 해상도의 ' + Math.round(autoQuality.scale * 100) + '%'
+    : '자동 조절 꺼짐 · 기본 해상도 유지';
+}
+syncAutoQuality();
+autoQualityInput.addEventListener('change', () => {
+  autoQualityEnabled = autoQualityInput.checked;
+  autoQuality.restore();
+  if (autoQualityEnabled) autoQuality.calibrate();
+  resize();
+  syncAutoQuality();
+  savePreferences();
+});
 
 function applyViewPreferences(save = true) {
   lowPower = lowPowerInput.checked; reducedMotion = reducedMotionInput.checked;
+  setFpsLimit(fpsLimit);
   precipitation.setReducedMotion(reducedMotion);
   review?.setReducedMotion(reducedMotion);
-  renderer?.setPixelRatio(Math.min(devicePixelRatio, lowPower ? 1 : 1.75));
   resize();
   if (save) {
     motionOverride = true;
@@ -253,8 +362,52 @@ function applyViewPreferences(save = true) {
   }
 }
 function savePreferences() {
-  try { localStorage.setItem(preferencesKey, JSON.stringify({ lowPower, ...(motionOverride ? { reducedMotion } : {}), mouseSensitivity })); } catch { /* 설정 저장 실패가 화면 사용을 막지 않는다. */ }
+  try { localStorage.setItem(preferencesKey, JSON.stringify({ lowPower, ...(motionOverride ? { reducedMotion } : {}), mouseSensitivity, fpsLimit, autoQuality: autoQualityEnabled, controlMode, audio: roomAudio.settings })); } catch { /* 설정 저장 실패가 화면 사용을 막지 않는다. */ }
 }
+function setFpsLimit(value) {
+  fpsLimit = normalizeFpsLimit(value);
+  autoQuality.reset();
+  fpsLimitInput.value = fpsLimit;
+  fpsLimitInput.setAttribute('aria-valuetext', fpsLimit + ' FPS');
+  fpsLimitOutput.value = fpsLimit + ' FPS';
+  $('#fps-limit-help').textContent = lowPower
+    ? '절전 표현 중에는 최대 30FPS입니다. 절전을 끄면 선택한 값이 적용됩니다.'
+    : '둘러보기의 프레임 상한입니다. 대기·일시정지·TV 화면은 최대 30FPS로 표시합니다.';
+  nextRenderAt = 0;
+}
+fpsLimitInput.addEventListener('input', () => setFpsLimit(fpsLimitInput.valueAsNumber));
+fpsLimitInput.addEventListener('change', savePreferences);
+$('#fps-limit-reset').addEventListener('click', () => { setFpsLimit(60); savePreferences(); });
+function syncSoundSettings() {
+  const settings = roomAudio.settings;
+  $('#sound-enabled').checked = settings.enabled;
+  $('#sound-toggle').textContent = settings.enabled ? '소리 끄기' : '소리 켜기';
+  $('#sound-toggle').setAttribute('aria-pressed', String(settings.enabled));
+  for (const name of ['master', 'effects', 'ambience']) {
+    const value = Math.round(settings[name] * 100);
+    $('#sound-' + name).value = value;
+    $('#sound-' + name + '-value').value = value + '%';
+  }
+}
+function setSoundEnabled(enabled) {
+  roomAudio.setSettings({ ...roomAudio.settings, enabled });
+  syncSoundSettings(); savePreferences();
+  if (enabled) void roomAudio.unlock();
+  else $('#sound-status').textContent = '소리가 꺼져 있습니다.';
+}
+$('#sound-toggle').addEventListener('click', () => setSoundEnabled(!roomAudio.settings.enabled));
+$('#sound-enabled').addEventListener('change', event => setSoundEnabled(event.target.checked));
+for (const name of ['master', 'effects', 'ambience']) {
+  $('#sound-' + name).addEventListener('input', event => {
+    roomAudio.setSettings({ ...roomAudio.settings, [name]: event.target.valueAsNumber / 100 });
+    syncSoundSettings();
+  });
+  $('#sound-' + name).addEventListener('change', savePreferences);
+}
+$('#sound-reset').addEventListener('click', () => {
+  roomAudio.setSettings(AUDIO_DEFAULTS); syncSoundSettings(); savePreferences();
+  $('#sound-status').textContent = '소리 설정을 초기화했습니다. 현재 음소거 상태입니다.';
+});
 function setMouseSensitivity(value) {
   mouseSensitivity = normalizeMouseSensitivity(value);
   const percent = Math.round(mouseSensitivity * 100);
@@ -321,6 +474,7 @@ function applyBlind() {
   bottomBar.position.y = pose.barY;
   applyNaturalLight();
   root.updateMatrixWorld(true);
+  windowLight.shadow.needsUpdate = true;
 }
 
 function setBlindOpening(value) {
@@ -361,6 +515,7 @@ function applyMoodLamp(state = environmentMoodController().read(environmentDate(
 }
 
 async function lockMouse() {
+  if (touchMode) { syncControlHelp(); return; }
   if (review) { $('#look-help').textContent = '마우스 드래그로 둘러보기'; return; }
   if (document.pointerLockElement === canvas) return;
   if (!canvas.requestPointerLock) { $('#look-help').textContent = '마우스 드래그로 둘러보기'; return; }
@@ -377,6 +532,7 @@ function enterRoom() {
   if (mode === 'error') { location.reload(); return; }
   if (!['ready', 'paused'].includes(mode)) return;
   setMode('explore');
+  void roomAudio.unlock();
   canvas.focus();
   lockMouse();
 }
@@ -393,11 +549,11 @@ function pauseRoom() {
 document.addEventListener('pointerlockchange', () => {
   const wasLocked = mouseLocked;
   mouseLocked = document.pointerLockElement === canvas;
-  $('#look-help').textContent = mouseLocked ? '마우스로 둘러보기' : '마우스 드래그로 둘러보기';
-  if (wasLocked && !mouseLocked && mode === 'explore') pauseRoom();
+  syncControlHelp();
+  if (wasLocked && !mouseLocked && mode === 'explore' && !touchMode) pauseRoom();
 });
 document.addEventListener('pointerlockerror', () => {
-  $('#look-help').textContent = '마우스 드래그로 둘러보기';
+  syncControlHelp();
 });
 
 function findInteraction() {
@@ -410,11 +566,18 @@ function setCameraTween(position, quaternion, fov, duration, done) {
   cameraTween = { start: performance.now(), duration: reducedMotion ? 1 : duration, fromPosition: camera.position.clone(), fromQuaternion: camera.quaternion.clone(), fromFov: camera.fov, position, quaternion, fov, done };
 }
 
+function tvViewPosition() {
+  const box = new THREE.Box3().setFromObject(screen), size = box.getSize(new THREE.Vector3());
+  const distance = Math.max(0.66, Math.max(size.y, Math.hypot(size.x, size.z) / camera.aspect) / (2 * Math.tan(THREE.MathUtils.degToRad(25))) * 1.12);
+  return box.getCenter(new THREE.Vector3()).addScaledVector(screenDirection(), distance);
+}
+
 function enterTV() {
   if (mode !== 'explore') return;
+  roomAudio.play('confirm');
   explorationPose = { position: camera.position.clone(), quaternion: camera.quaternion.clone(), fov: camera.fov };
   const screenCenter = new THREE.Box3().setFromObject(screen).getCenter(new THREE.Vector3());
-  const position = screenCenter.clone().addScaledVector(screenDirection(), 0.66);
+  const position = tvViewPosition();
   const look = new THREE.PerspectiveCamera();
   look.position.copy(position);
   look.lookAt(screenCenter);
@@ -430,31 +593,52 @@ function enterTV() {
 
 function exitTV() {
   if (!explorationPose || mode === 'tv-exit') return;
+  roomAudio.play('back');
   setMode('tv-exit');
   setCameraTween(explorationPose.position, explorationPose.quaternion, explorationPose.fov, 500, () => {
     setMode('explore');
     tvMenu.setActive(false);
     canvas.focus({ preventScroll: true });
-    $('#look-help').textContent = mouseLocked ? '마우스로 둘러보기' : '마우스 드래그로 둘러보기';
+    syncControlHelp();
   });
   lockMouse();
 }
 
-function interact() {
-  const target = findInteraction();
+function interact(target = findInteraction()) {
   if (!target) return;
   if (target.id === 'tv') enterTV();
   else if (target.id === 'blind') openBlindControls();
   else if (target.id === 'lamp') {
     const state = environmentMoodController().toggle(environmentDate());
     applyMoodLamp(state);
+    roomAudio.play('switch');
     notice((state.on ? '무드등을 켰습니다.' : '무드등을 껐습니다.') + (review?.state.fixedTime != null
       ? ' 검수 시각을 바꾸면 자동 상태로 돌아갑니다.' : ' 다음 일출·일몰 전환까지 유지됩니다.'));
   } else if ((target.id === 'ceiling-light' || target.id === 'ceiling-switch') && ceilingLamp) {
     const on = ceilingLamp.toggle();
+    windowLight.shadow.needsUpdate = true;
+    roomAudio.play('switch');
     texelSplat?.invalidate();
     notice(on ? '천장등을 켰습니다.' : '천장등을 껐습니다.');
   }
+}
+
+function hitTV(clientX, clientY) {
+  const bounds = canvas.getBoundingClientRect();
+  const pointer = new THREE.Vector2((clientX - bounds.left) / bounds.width * 2 - 1, 1 - (clientY - bounds.top) / bounds.height * 2);
+  camera.updateMatrixWorld(); raycaster.setFromCamera(pointer, camera);
+  const hit = raycaster.intersectObject(screen, false)[0];
+  if (hit?.uv) tvMenu.hit(hit.uv.x, hit.uv.y);
+}
+function tapCanvas(clientX, clientY) {
+  if (mode === 'tv') { hitTV(clientX, clientY); return; }
+  if (mode !== 'explore') return;
+  const bounds = canvas.getBoundingClientRect();
+  const pointer = new THREE.Vector2((clientX - bounds.left) / bounds.width * 2 - 1, 1 - (clientY - bounds.top) / bounds.height * 2);
+  camera.updateMatrixWorld(); raycaster.setFromCamera(pointer, camera);
+  const result = touchInteraction(raycaster, targets, meshes, owners, Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 44 / bounds.height);
+  if (result?.inRange) interact(result.target);
+  else if (result) notice('왼쪽 스틱으로 조금 더 가까이 이동한 뒤 터치해 주세요.');
 }
 
 function chooseGame() { if (mode === 'tv') tvMenu.choose(); }
@@ -482,6 +666,7 @@ $('#tv-choose').addEventListener('click', chooseGame);
 $('#tv-back').addEventListener('click', backFromTV);
 
 document.addEventListener('keydown', event => {
+  if (graphicsHelp.open) return;
   if (blindDialog.open) {
     if (event.code === 'Escape') { event.preventDefault(); closeBlindControls(); }
     return;
@@ -516,10 +701,11 @@ document.addEventListener('keydown', event => {
   } else if (mode.startsWith('tv') && event.code === 'Space') event.preventDefault();
 });
 document.addEventListener('keyup', event => keys.delete(event.code));
-addEventListener('blur', () => { keys.clear(); pauseRoom(); });
-document.addEventListener('visibilitychange', () => { if (document.hidden) { keys.clear(); pauseRoom(); } });
+addEventListener('blur', () => { keys.clear(); touchControls.cancel(); pauseRoom(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { keys.clear(); touchControls.cancel(); pauseRoom(); } });
 
 canvas.addEventListener('pointerdown', event => {
+  if (touchMode) return;
   if (event.button !== 0) return;
   if ((mode === 'explore' || mode === 'blind') && !mouseLocked) {
     dragging = true;
@@ -527,33 +713,50 @@ canvas.addEventListener('pointerdown', event => {
     canvas.setPointerCapture?.(event.pointerId);
     if (mode === 'explore') lockMouse();
   } else if (mode === 'tv') {
-    const bounds = canvas.getBoundingClientRect();
-    const pointer = new THREE.Vector2((event.clientX - bounds.left) / bounds.width * 2 - 1, 1 - (event.clientY - bounds.top) / bounds.height * 2);
-    raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObject(screen, false)[0];
-    if (hit?.uv) tvMenu.hit(hit.uv.x, hit.uv.y);
+    hitTV(event.clientX, event.clientY);
   }
 });
 addEventListener('pointerup', () => { dragging = false; lastMouse = null; });
 addEventListener('pointercancel', () => { dragging = false; lastMouse = null; });
 document.addEventListener('mousemove', event => {
+  if (touchMode) return;
   if ((mode !== 'explore' && mode !== 'blind') || (!mouseLocked && !dragging)) return;
   const dx = mouseLocked ? event.movementX : event.clientX - (lastMouse?.x ?? event.clientX);
   const dy = mouseLocked ? event.movementY : event.clientY - (lastMouse?.y ?? event.clientY);
   lastMouse = { x: event.clientX, y: event.clientY };
-  yaw -= dx * 0.0023 * mouseSensitivity;
-  pitch = THREE.MathUtils.clamp(pitch - dy * 0.0023 * mouseSensitivity, -1.30, 1.30);
-  camera.rotation.set(pitch, yaw, 0, 'YXZ');
+  rotateView(dx, dy);
 });
+
+function rotateView(dx, dy, touch = false) {
+  const speed = touch ? 2.1 / Math.max(240, Math.min(canvas.clientWidth, canvas.clientHeight)) : 0.0023;
+  yaw -= dx * speed * mouseSensitivity;
+  pitch = THREE.MathUtils.clamp(pitch - dy * speed * mouseSensitivity, -1.30, 1.30);
+  camera.rotation.set(pitch, yaw, 0, 'YXZ');
+}
 
 canvas.addEventListener('webglcontextlost', event => {
   event.preventDefault();
+  graphicsHelp.unavailable();
   renderer?.setAnimationLoop(null);
   fatal('그래픽 연결이 중단되었습니다. 새로고침해서 방을 다시 열어 주세요.');
 });
 
 if (renderer) {
-  new GLTFLoader().load('./assets/room.glb', gltf => {
+  const modelUrl = new URL('./assets/room.glb', import.meta.url);
+  description.textContent = roomDownloadText({ loaded: 0, total: null });
+  fetch(modelUrl)
+    .then(response => readGlbResponse(response, progress => {
+      if (mode !== 'loading') return;
+      const text = roomDownloadText(progress);
+      if (description.textContent !== text) description.textContent = text;
+    }))
+    .then(buffer => {
+      if (mode === 'error') return null;
+      description.textContent = '모델과 텍스처를 준비하는 중…';
+      return new GLTFLoader().parseAsync(buffer, new URL('.', modelUrl).href);
+    })
+    .then(gltf => {
+    if (!gltf || mode === 'error') return;
     try {
       root = gltf.scene;
       scene.add(root);
@@ -567,7 +770,7 @@ if (renderer) {
       ({ screen, fabric, bottomBar, owners } = bindings);
       meshes.push(...bindings.meshes);
       targets.push(...bindings.targets);
-      interactionOutline.setTargets(targets);
+      interactionOutline.setTargets(targets, root);
       obstacles.push(...bindings.obstacles);
       moodLamp = createMoodLight(bindings.lampShade);
       scene.add(moodLamp.light);
@@ -586,27 +789,31 @@ if (renderer) {
       texture.magFilter = THREE.NearestFilter;
       texture.generateMipmaps = false;
       screen.material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false });
-      tvMenu = createTVMenu(menuCanvas, () => { texture.needsUpdate = true; refreshTVControls(); });
+      tvMenu = createTVMenu(menuCanvas, () => { texture.needsUpdate = true; refreshTVControls(); }, undefined, kind => roomAudio.play(kind));
       tvMenu.setActive(false);
       texelSplat.bindScene([screen]);
       applyBlind();
-      description.textContent = 'WASD로 이동하고 마우스로 둘러보세요. 게임기, 블라인드 줄, 무드등, 천장등과 문 옆 스위치는 F 또는 Space로 사용할 수 있습니다.';
+      description.textContent = roomInstructions();
       enterButton.textContent = '방 둘러보기';
       enterButton.disabled = false;
       setMode('ready');
       if (!texelSplat.supported) notice('이 기기에서는 기본 3D 화면으로 표시합니다. 이동과 상호작용은 그대로 사용할 수 있습니다.');
     } catch (error) { fatal('방의 구성을 준비하지 못했습니다. 새로고침해 주세요.', error); }
-  }, progress => {
-    if (progress.total) description.textContent = '방을 준비하고 있습니다. ' + Math.round(progress.loaded / progress.total * 100) + '%';
   }, error => fatal('방 모델을 불러오지 못했습니다. 새로고침해 주세요.', error));
 
   renderer.setAnimationLoop(time => {
     if (document.hidden) return;
-    const limited = lowPower || mode === 'ready' || mode === 'paused' || mode === 'tv';
-    if (limited && time < nextRenderAt) return;
-    // 다음 예정 시각을 누적해 75Hz 같은 화면에서도 30fps 제한이 25fps로 떨어지지 않게 한다.
-    nextRenderAt = limited ? Math.max(time, nextRenderAt + 1000 / 30) : time;
+    // 도움말을 읽는 동안에는 무거운 3D 그리기를 멈춰 안내 조작이 밀리지 않게 한다.
+    if (graphicsHelp.open) { previousTime = time; nextRenderAt = time; return; }
+    const calibratingQuality = autoQualityEnabled && autoQuality.tick(time);
+    const frameLimit = lowPower || mode === 'ready' || mode === 'paused' || mode === 'tv' ? 30 : fpsLimit;
+    if (time + 0.25 < nextRenderAt) return;
+    // 예정 시각을 누적해 서로 다른 주사율에서도 선택한 평균 프레임을 유지한다.
+    // 긴 중단 뒤에는 밀린 프레임을 몰아 그리지 않고 새 간격으로 시작한다.
+    nextRenderAt += 1000 / frameLimit;
+    if (nextRenderAt <= time + 0.25) nextRenderAt = time + 1000 / frameLimit;
     const frameMs = Math.max(0, time - previousTime);
+    graphicsHelp.sampleFrame(frameMs, mode === 'explore');
     const seconds = Math.min(0.05, frameMs / 1000);
     previousTime = time;
     if (time >= nextMoodCheck) {
@@ -615,10 +822,11 @@ if (renderer) {
       nextMoodCheck = time + 1000;
     }
     if (mode === 'explore') {
-      const delta = movementInput(Number(keys.has('KeyW')) - Number(keys.has('KeyS')), Number(keys.has('KeyD')) - Number(keys.has('KeyA')), yaw, seconds);
+      const delta = movementInput(Number(keys.has('KeyW')) - Number(keys.has('KeyS')) + touchControls.movement.forward,
+        Number(keys.has('KeyD')) - Number(keys.has('KeyA')) + touchControls.movement.right, yaw, frameMs / 1000);
       const moved = moveCircle(camera.position, delta, obstacles);
       camera.position.set(moved.x, PLAYER_HEIGHT, moved.z);
-      const next = findInteraction();
+      const next = touchMode ? null : findInteraction();
       let action = next?.label || '';
       if (next?.id === 'blind') action = '블라인드 높이 조절';
       if (next?.id === 'lamp') action = moodLampOn ? '무드등 끄기' : '무드등 켜기';
@@ -637,11 +845,14 @@ if (renderer) {
       camera.updateProjectionMatrix();
       if (t >= 1) { cameraTween = null; tween.done(); }
     }
-    if (Math.abs(openingTarget - opening) > 0.0001) {
+    const blindMoving = Math.abs(openingTarget - opening) > 0.0001;
+    if (blindMoving) {
       const step = reducedMotion ? 1 : seconds * 0.9;
       opening += Math.sign(openingTarget - opening) * Math.min(step, Math.abs(openingTarget - opening));
       applyBlind();
     }
+    const listener = explorationPose && mode.startsWith('tv') ? explorationPose.position : camera.position;
+    roomAudio.update(effectiveWeather, effectiveTraffic, Math.hypot(listener.x, listener.z + 1.82), opening, blindMoving, time);
     exterior.update(reducedMotion ? 0 : seconds);
     const ambientMotion = !reducedMotion && opening > 0.02 && mode !== 'loading' && mode !== 'error' && !mode.startsWith('tv');
     if (streetLife.setFrameState(frameMs, ambientMotion)) {
@@ -650,7 +861,13 @@ if (renderer) {
     }
     streetLife.update(seconds, camera);
     precipitation.update(seconds, ambientMotion);
+    // 주사율 측정 중에도 입력을 처리하고 크기가 바뀐 캔버스에는 한 번 그린다.
+    if (calibratingQuality && !resizeFramePending) return;
+    if (autoQualityEnabled && mode === 'explore' && !calibratingQuality) {
+      if (autoQuality.sample(frameMs, frameLimit)) { resize(); syncAutoQuality(); }
+    } else autoQuality.reset();
     texelSplat.render(time / 1000);
     interactionOutline.render(reducedMotion ? 0 : seconds);
+    resizeFramePending = false;
   });
 }

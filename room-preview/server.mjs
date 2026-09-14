@@ -8,7 +8,7 @@ import { createTrafficProxy } from './traffic-proxy.mjs';
 const previewRoot = path.dirname(fileURLToPath(import.meta.url));
 const fullSite = process.env.ROOM_SITE_ROOT === '1';
 const root = fullSite ? path.dirname(previewRoot) : previewRoot;
-const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ttf': 'font/ttf' };
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.mp3': 'audio/mpeg', '.txt': 'text/plain; charset=utf-8' };
 let forecast = null, weatherRequest = null;
 let weatherRetryAt = 0;
 const traffic = createTrafficProxy({ key: process.env.SEOUL_TRAFFIC_API_KEY || '' });

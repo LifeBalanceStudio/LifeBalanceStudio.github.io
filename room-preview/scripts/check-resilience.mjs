@@ -51,6 +51,7 @@ for (const [name, executablePath] of executables) {
           const dragHelp = await page.locator('#look-help').innerText();
           await page.keyboard.press('Escape');
           await page.locator('#view-settings summary').click(); await page.locator('#reduce-motion').check();
+          await page.locator('#view-settings summary').click();
           await page.locator('#resume-button').click();
           const shortTween = await page.evaluate(() => { __qa.enterTV(); return __qa.tweenDuration === 1; });
           await page.waitForFunction(() => __qa.mode === 'tv');
