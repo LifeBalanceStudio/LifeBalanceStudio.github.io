@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { START, PLAYER_HEIGHT, movementInput, normalizeMouseSensitivity, normalizeFpsLimit, bindRoom, moveCircle, blindPose, visibleInteraction, touchInteraction, easeInOut } from './world.mjs';
 import { createTVMenu } from './portfolio.mjs';
+import { createUnityDemo } from './unity-demo.mjs';
 import { createInteractionOutline } from './outline.mjs';
 import { createMoodLightController, createMoodLight } from './mood-light.mjs';
 import { createCeilingLight } from './ceiling-light.mjs';
@@ -116,6 +117,14 @@ let nextRenderAt = 0;
 let noticeTimer;
 setFpsLimit(fpsLimit);
 const roomAudio = createRoomAudio({ settings: audioSettings, onStatus: message => { $('#sound-status').textContent = message; } });
+const unityDemo = createUnityDemo($('#demo-dialog'), () => {
+  if (screen) screen.material.color.setHex(0xffffff);
+  if (mode !== 'tv-demo') return;
+  setMode('tv');
+  resize();
+  refreshTVControls();
+  $('#tv-demo').focus({ preventScroll: true });
+});
 syncSoundSettings();
 if (audioSettings.enabled) $('#sound-status').textContent = '방에 입장하면 소리가 재생됩니다.';
 const graphicsHelp = mountGraphicsHelp({
@@ -144,8 +153,8 @@ function setMode(next) {
   previousTime = performance.now();
   nextRenderAt = 0;
   graphicsHelp.setMode(next);
-  roomAudio.setActive(!['loading', 'error'].includes(mode));
-  $('#sound-toggle').hidden = mode === 'error';
+  roomAudio.setActive(!['loading', 'error', 'tv-demo'].includes(mode));
+  $('#sound-toggle').hidden = mode === 'error' || mode === 'tv-demo';
   if (mode !== 'blind' && blindDialog.open) blindDialog.close();
   interactionOutline?.setMode(next);
   syncTexelOption();
@@ -328,9 +337,10 @@ function resize() {
   texelSplat?.resize();
   interactionOutline?.resize(width, height);
   camera.aspect = width / height;
-  if (screen && mode === 'tv') camera.position.copy(tvViewPosition());
+  if (screen && ['tv', 'tv-demo'].includes(mode)) camera.position.copy(tvViewPosition());
   else if (screen && mode === 'tv-enter' && cameraTween) cameraTween.position.copy(tvViewPosition());
   camera.updateProjectionMatrix();
+  if (mode === 'tv-demo') positionDemo();
 }
 addEventListener('resize', () => { autoQuality.calibrate(); touchControls.cancel(); resize(); });
 resize();
@@ -447,10 +457,11 @@ function refreshTVControls() {
   $('#tv-next').hidden = tvMenu.detail && (!pagedDetail || features);
   $('#tv-previous').disabled = tvMenu.detail ? !pagedDetail : tvMenu.selectableCount < 2;
   $('#tv-next').disabled = tvMenu.detail ? !pagedDetail : tvMenu.selectableCount < 2;
-  $('#tv-previous').textContent = pagedDetail ? '게임 소개로' : '이전';
-  $('#tv-next').textContent = pagedDetail ? '개발 특징 보기' : '다음';
-  $('#tv-previous').setAttribute('aria-label', pagedDetail ? '게임 소개로' : pages ? '이전 페이지' : '이전 게임');
-  $('#tv-next').setAttribute('aria-label', pagedDetail ? '개발 특징 보기' : pages ? '다음 페이지' : '다음 게임');
+  $('#tv-previous').textContent = pagedDetail ? '이전 페이지' : '이전';
+  $('#tv-next').textContent = pagedDetail ? '다음 페이지' : '다음';
+  $('#tv-previous').setAttribute('aria-label', pagedDetail || pages ? '이전 페이지' : '이전 게임');
+  $('#tv-next').setAttribute('aria-label', pagedDetail || pages ? '다음 페이지' : '다음 게임');
+  $('#tv-demo').hidden = !tvMenu.detail || !tvMenu.current?.demo;
   if (pagedDetail && pagerFocused) $(features ? '#tv-previous' : '#tv-next').focus();
   $('#tv-back').textContent = tvMenu.detail ? '게임 목록으로' : pages ? '방으로 돌아가기' : '페이지 목록으로';
   const gameLink = $('#tv-game-link');
@@ -568,7 +579,9 @@ function setCameraTween(position, quaternion, fov, duration, done) {
 
 function tvViewPosition() {
   const box = new THREE.Box3().setFromObject(screen), size = box.getSize(new THREE.Vector3());
-  const distance = Math.max(0.66, Math.max(size.y, Math.hypot(size.x, size.z) / camera.aspect) / (2 * Math.tan(THREE.MathUtils.degToRad(25))) * 1.12);
+  // 낮은 가로 화면에서도 종료 버튼이 게임의 하단을 가리지 않도록 여유를 둔다.
+  const verticalSpace = mode === 'tv-demo' ? Math.max(0.3, (canvas.clientHeight - 140) / canvas.clientHeight) : 1;
+  const distance = Math.max(0.66, Math.max(size.y / verticalSpace, Math.hypot(size.x, size.z) / camera.aspect) / (2 * Math.tan(THREE.MathUtils.degToRad(25))) * 1.12);
   return box.getCenter(new THREE.Vector3()).addScaledVector(screenDirection(), distance);
 }
 
@@ -602,6 +615,29 @@ function exitTV() {
     syncControlHelp();
   });
   lockMouse();
+}
+
+function positionDemo() {
+  if (!screen || mode !== 'tv-demo') return;
+  camera.updateMatrixWorld();
+  const positions = screen.geometry.attributes.position, point = new THREE.Vector3();
+  let left = Infinity, top = -Infinity, right = -Infinity, bottom = Infinity;
+  for (let i = 0; i < positions.count; i++) {
+    point.fromBufferAttribute(positions, i).applyMatrix4(screen.matrixWorld).project(camera);
+    left = Math.min(left, point.x); right = Math.max(right, point.x);
+    top = Math.max(top, point.y); bottom = Math.min(bottom, point.y);
+  }
+  const rect = canvas.getBoundingClientRect();
+  unityDemo.resize({ left: rect.left + (left + 1) * rect.width / 2, top: rect.top + (1 - top) * rect.height / 2,
+    width: (right - left) * rect.width / 2, height: (top - bottom) * rect.height / 2 });
+}
+
+function playDemo() {
+  if (mode !== 'tv' || !tvMenu?.detail || !tvMenu.current?.demo) return;
+  if (!unityDemo.open(tvMenu.current.demo)) return;
+  screen.material.color.setHex(0x000000);
+  setMode('tv-demo');
+  resize();
 }
 
 function interact(target = findInteraction()) {
@@ -644,6 +680,7 @@ function tapCanvas(clientX, clientY) {
 function chooseGame() { if (mode === 'tv') tvMenu.choose(); }
 function backFromTV() { if (mode === 'tv' && tvMenu.back()) return; exitTV(); }
 function syncTexelOption() {
+  $('#render-options').hidden = mode === 'tv-demo';
   texelToggle.checked = Boolean(texelSplat?.state.enabled);
   texelToggle.disabled = !texelSplat?.supported || ['loading', 'error'].includes(mode);
   if (texelSplat && !texelSplat.supported) $('#render-options').title = '이 기기에서는 기본 3D 화면으로 표시합니다.';
@@ -663,9 +700,11 @@ texelToggle.addEventListener('change', () => setTexelOption(texelToggle.checked)
 $('#tv-previous').addEventListener('click', () => tvMenu?.detail ? tvMenu.turnDetail(-1) : tvMenu?.select(-1));
 $('#tv-next').addEventListener('click', () => tvMenu?.detail ? tvMenu.turnDetail(1) : tvMenu?.select(1));
 $('#tv-choose').addEventListener('click', chooseGame);
+$('#tv-demo').addEventListener('click', playDemo);
 $('#tv-back').addEventListener('click', backFromTV);
 
 document.addEventListener('keydown', event => {
+  if (mode === 'tv-demo') return;
   if (graphicsHelp.open) return;
   if (blindDialog.open) {
     if (event.code === 'Escape') { event.preventDefault(); closeBlindControls(); }
@@ -694,10 +733,12 @@ document.addEventListener('keydown', event => {
     const choose = ['Enter', 'KeyF', 'Space'].includes(event.code);
     if (previous || next || choose) event.preventDefault();
     if (event.repeat) return;
-    if (tvMenu.detail && tvMenu.detailPageCount > 1 && ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(event.code)) tvMenu.turnDetail(previous ? -1 : 1);
+    if (tvMenu.detail && ['PageUp', 'PageDown'].includes(event.code)) { event.preventDefault(); tvMenu.scrollDetail(event.code === 'PageUp' ? -4 : 4); }
+    else if (tvMenu.detail && tvMenu.detailPageCount > 1 && ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(event.code)) tvMenu.turnDetail(previous ? -1 : 1);
     else if (previous) tvMenu.select(-1);
     else if (next) tvMenu.select(1);
     else if (choose) chooseGame();
+    if (previous || next) canvas.focus({ preventScroll: true });
   } else if (mode.startsWith('tv') && event.code === 'Space') event.preventDefault();
 });
 document.addEventListener('keyup', event => keys.delete(event.code));
@@ -789,7 +830,7 @@ if (renderer) {
       texture.magFilter = THREE.NearestFilter;
       texture.generateMipmaps = false;
       screen.material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false });
-      tvMenu = createTVMenu(menuCanvas, () => { texture.needsUpdate = true; refreshTVControls(); }, undefined, kind => roomAudio.play(kind));
+      tvMenu = createTVMenu(menuCanvas, () => { texture.needsUpdate = true; refreshTVControls(); }, undefined, kind => roomAudio.play(kind), playDemo);
       tvMenu.setActive(false);
       texelSplat.bindScene([screen]);
       applyBlind();
@@ -803,6 +844,11 @@ if (renderer) {
 
   renderer.setAnimationLoop(time => {
     if (document.hidden) return;
+    if (mode === 'tv-demo') {
+      previousTime = time;
+      if (resizeFramePending) { texelSplat.render(time / 1000); resizeFramePending = false; }
+      return;
+    }
     // 도움말을 읽는 동안에는 무거운 3D 그리기를 멈춰 안내 조작이 밀리지 않게 한다.
     if (graphicsHelp.open) { previousTime = time; nextRenderAt = time; return; }
     const calibratingQuality = autoQualityEnabled && autoQuality.tick(time);

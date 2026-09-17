@@ -133,6 +133,15 @@ kbd { font: inherit; color: #f3d8aa; }
 .tv-buttons button { border: 1px solid #b5a88c5e; padding: 8px 14px; background: #25272b; font-size: .875rem; white-space: nowrap; }
 .tv-buttons button:hover { background: #464039; }
 .tv-buttons button:disabled { opacity: .35; cursor: default; }
+#demo-dialog { inset: 0; margin: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; padding: 0; border: 0; overflow: hidden; background: transparent; color: #eee2cf; }
+#demo-dialog::backdrop { background: transparent; }
+.demo-screen { position: fixed; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 6% / 7%; background: #000; }
+.demo-screen iframe { display: block; border: 0; flex: none; height: var(--game-height); width: calc(var(--game-height) * .625); }
+#demo-status { position: absolute; inset: 0; display: grid; align-content: center; margin: 0; padding: 16px; text-align: center; background: #080b10; font-size: .8rem; line-height: 1.8; }
+.demo-toolbar { position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); max-width: calc(100vw - 24px); width: max-content; align-items: center; padding: 8px 12px; border: 1px solid #c7ae812e; background: #101419ef; }
+.demo-toolbar button { min-height: 44px; }
+.demo-toolbar span { font-size: .72rem; }
+@media (max-width: 600px), (max-height: 500px) { .demo-toolbar span { display: none; } .demo-toolbar { bottom: max(8px, env(safe-area-inset-bottom)); padding: 4px 8px; } }
 #notice { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); max-width: min(90vw, 620px); background: #161b22ec; padding: 12px 18px; line-height: 1.6; font-size: .875rem; border: 1px solid #786f5a; }
 @media (max-width: 600px) { .brand { top: 20px; left: 20px; } .panel { left: 20px; max-width: calc(100vw - 40px); padding: 22px; bottom: 125px; } .help { left: 20px; right: 20px; gap: 4px 16px; } #tv-controls { bottom: 15px; width: calc(100vw - 30px); } }
 @media (max-width: 600px) { .render-options { top: 52px; right: 20px; } }

@@ -177,10 +177,21 @@
         <button id="tv-previous" type="button" aria-label="이전 게임">이전</button>
         <button id="tv-choose" type="button">자세히 보기</button>
         <button id="tv-next" type="button" aria-label="다음 게임">다음</button>
+        <button id="tv-demo" type="button" hidden>데모 플레이</button>
         <button id="tv-back" type="button">방으로 돌아가기</button>
         <a id="tv-game-link" class="game-link" target="_blank" rel="noopener noreferrer" hidden>Google Play에서 보기</a>
       </div>
     </section>
+    <dialog id="demo-dialog" aria-label="CRT 데모 플레이">
+      <div class="demo-screen">
+        <p id="demo-status" role="status">데모를 불러오는 중…</p>
+      </div>
+      <div class="demo-toolbar tv-buttons">
+        <button id="demo-retry" type="button" hidden>다시 시도</button>
+        <button id="demo-exit" type="button">데모 종료 · 메뉴로</button>
+        <span>Esc로 돌아가기</span>
+      </div>
+    </dialog>
     <footer id="help" class="help"><span id="move-help"><kbd>WASD</kbd> 이동</span><span id="look-help">마우스 둘러보기</span><span id="interact-help"><kbd>F</kbd> / <kbd>Space</kbd> 사용</span><span id="pause-help"><kbd>Esc</kbd> 일시정지</span></footer>
     <div id="notice" role="status" hidden></div>
   </main>

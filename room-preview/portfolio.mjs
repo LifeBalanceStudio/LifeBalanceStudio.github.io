@@ -19,7 +19,8 @@ export const games = [
       { title: '피버·황금 러시', description: '적중으로 피버 게이지를 채우고\n황금 별을 누르면 황금 러시가 시작됩니다.' },
       { title: '물방울 표현과 풀링', description: '셰이더로 물방울의 움직임을 표현하고\n풀링으로 사용한 오브젝트를 재사용합니다.' }
     ],
-    image: './assets/fastpop.png', url: 'https://play.google.com/store/apps/details?id=com.LifeBalance.FastPop'
+    image: './assets/fastpop.png', url: 'https://play.google.com/store/apps/details?id=com.LifeBalance.FastPop',
+    demo: './unity-player.html'
   },
   { title: 'PachiPachi', description: '공을 조작하며 여러 보상을 얻는 캐주얼 게임입니다.', image: './assets/pachipachi.png', url: '', status: '준비 중' },
   { title: '개발 중인 게임', description: '메시지를 담은 다음 게임을 준비하고 있습니다.', image: './assets/questionmark.png', url: '', status: '준비 중' }
@@ -29,7 +30,7 @@ export const MENU_PAGE_SIZE = 10;
 export const MENU_WIDTH = 256;
 export const MENU_HEIGHT = 240;
 
-export function createTVMenu(canvas, onChange, items = games, onSound = () => {}) {
+export function createTVMenu(canvas, onChange, items = games, onSound = () => {}, onDemo = () => {}) {
   const context = canvas.getContext('2d');
   let active = false;
   let stage = 'pages';
@@ -37,12 +38,14 @@ export function createTVMenu(canvas, onChange, items = games, onSound = () => {}
   let row = 0;
   let detailPage = 0;
   let detailScroll = 0;
+  let detailAction = 0;
   let detailLines = [];
   const hitAreas = [];
   const pageCount = Math.max(1, Math.ceil(items.length / MENU_PAGE_SIZE));
   const entries = () => items.slice(page * MENU_PAGE_SIZE, (page + 1) * MENU_PAGE_SIZE);
   const current = () => stage === 'pages' ? null : entries()[row] || null;
   const hasFeatures = () => Boolean(current()?.features?.length);
+  const detailActions = () => [...(hasFeatures() ? ['page'] : []), ...(current()?.demo ? ['demo'] : [])];
   const introduction = () => [current()?.description || '설명을 준비하고 있습니다.', '', '개인 프로젝트 · 1인 개발', ...(current()?.details || [])].join('\n');
   const font = text => /[^\x00-\x7f]/.test(text) ? '6px "Galmuri11", monospace' : '8px "NESMenu", monospace';
 
@@ -165,15 +168,17 @@ export function createTVMenu(canvas, onChange, items = games, onSound = () => {}
         context.fillStyle = '#ffffff';
         detailLines.slice(detailScroll, detailScroll + 8).forEach((line, index) => context.fillText(line, 43, 74 + index * 14));
       }
-      if (paged) {
-        context.fillStyle = '#f7b400';
-        context.fillRect(53, 188, 158, 15);
+      detailActions().forEach((action, index) => {
+        const y = 183 + index * 17;
+        context.fillStyle = index === detailAction ? '#f7b400' : '#7575dc';
+        context.fillRect(53, y, 158, 15);
         context.fillStyle = '#0000b4';
-        context.fillRect(54, 189, 156, 13);
-        text(detailPage ? '◀ 게임 소개로' : '개발 특징 보기 ▶', 132, 192, 'center');
-        hitAreas.push({ x: 53, y: 188, width: 158, height: 15, detail: true });
-      }
-      text(detailLines.length > 8 ? '위/아래 설명 · Esc 목록' : paged ? '←→ 전환 · Esc 목록' : 'Esc 게임 목록', 132, 213, 'center');
+        context.fillRect(54, y + 1, 156, 13);
+        if (index === detailAction) cursor(43, y + 3);
+        text(action === 'demo' ? '데모 플레이' : detailPage ? '◀ 이전 페이지' : '다음 페이지 ▶', 132, y + 4, 'center');
+        hitAreas.push({ x: 53, y, width: 158, height: 15, action: index });
+      });
+      text(current()?.demo ? '↑↓ 선택 · Enter 실행 · Esc 목록' : detailLines.length > 8 ? '위/아래 설명 · Esc 목록' : paged ? '←→ 전환 · Esc 목록' : 'Esc 게임 목록', 132, 217, 'center');
     }
     onChange();
   }
@@ -191,8 +196,13 @@ export function createTVMenu(canvas, onChange, items = games, onSound = () => {}
   function choose() {
     if (!active) return false;
     if (stage === 'pages') { stage = 'games'; row = 0; }
-    else if (stage === 'games' && current()) { stage = 'detail'; detailPage = 0; detailScroll = 0; }
-    else if (stage === 'detail') return turnDetail(1);
+    else if (stage === 'games' && current()) { stage = 'detail'; detailPage = 0; detailScroll = 0; detailAction = 0; }
+    else if (stage === 'detail') {
+      if (detailActions()[detailAction] !== 'demo') return turnDetail(1);
+      onSound('confirm');
+      onDemo(current());
+      return true;
+    }
     else return false;
     draw();
     onSound('confirm');
@@ -203,6 +213,7 @@ export function createTVMenu(canvas, onChange, items = games, onSound = () => {}
     get stage() { return stage; },
     get detail() { return stage === 'detail'; },
     get detailPage() { return detailPage; },
+    get detailAction() { return detailAction; },
     get detailPageCount() { return hasFeatures() ? 2 : 1; },
     get detailTitle() { return detailPage ? '개발 특징' : '게임 소개'; },
     get detailText() { return detailPage ? current().features.map(feature => feature.title + '\n' + feature.description).join('\n\n') : introduction(); },
@@ -211,22 +222,30 @@ export function createTVMenu(canvas, onChange, items = games, onSound = () => {}
     get selectedPage() { return page; },
     get selected() { return page * MENU_PAGE_SIZE + row; },
     get selectableCount() { return stage === 'pages' ? pageCount : stage === 'games' ? entries().length : 0; },
-    setActive(value) { active = value; stage = 'pages'; row = 0; detailPage = 0; detailScroll = 0; draw(); },
+    setActive(value) { active = value; stage = 'pages'; row = 0; detailPage = 0; detailScroll = 0; detailAction = 0; draw(); },
     select(offset) {
       if (!active) return;
-      const previous = [page, row, detailScroll].join(':');
+      const previous = [page, row, detailScroll, detailAction].join(':');
       if (stage === 'pages') page = (page + offset % pageCount + pageCount) % pageCount;
       else if (stage === 'games') {
         const count = entries().length;
         if (count) row = (row + offset % count + count) % count;
+      } else if (current()?.demo) {
+        const count = detailActions().length;
+        detailAction = (detailAction + offset % count + count) % count;
       } else detailScroll = Math.max(0, Math.min(detailScroll + offset, detailLines.length - 8));
       draw();
-      if (previous !== [page, row, detailScroll].join(':')) onSound('move');
+      if (previous !== [page, row, detailScroll, detailAction].join(':')) onSound('move');
+    },
+    scrollDetail(offset) {
+      if (!active || stage !== 'detail') return;
+      detailScroll = Math.max(0, Math.min(detailScroll + offset, detailLines.length - 8));
+      draw();
     },
     choose,
     turnDetail,
     back() {
-      if (stage === 'detail') { stage = 'games'; detailPage = 0; detailScroll = 0; }
+      if (stage === 'detail') { stage = 'games'; detailPage = 0; detailScroll = 0; detailAction = 0; }
       else if (stage === 'games') stage = 'pages';
       else return false;
       draw();
@@ -239,7 +258,7 @@ export function createTVMenu(canvas, onChange, items = games, onSound = () => {}
       const y = v * MENU_HEIGHT;
       const hit = hitAreas.find(area => x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height);
       if (!hit) return false;
-      if (hit.detail) return turnDetail(1);
+      if (hit.action !== undefined) { detailAction = hit.action; draw(); return choose(); }
       if (hit.page !== undefined) page = hit.page;
       if (hit.row !== undefined) row = hit.row;
       return choose();

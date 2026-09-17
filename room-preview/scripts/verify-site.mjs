@@ -16,7 +16,8 @@ function collect(directory) {
     if (item.isDirectory()) collect(relative); else files.add(relative);
   }
 }
-collect('img'); collect('room-preview/assets');
+collect('img'); collect('room-preview/assets'); collect('games/fastpop_webgl');
+files.add('room-preview/unity-player.html');
 function inspect(file) {
   if (modules.has(file)) return;
   modules.add(file); files.add(file);

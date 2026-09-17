@@ -6,8 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const failures = [];
-const files = ['index.html', 'styles.css', 'app.mjs', 'world.mjs', 'portfolio.mjs', 'assets/room.glb', 'assets/uncap.png', 'assets/fastpop.png', 'assets/pachipachi.png', 'assets/questionmark.png', 'assets/fonts/Galmuri11.woff2', 'assets/fonts/PressStart2P-Regular.ttf', 'assets/fonts/OFL-Galmuri.txt', 'vendor/texel-splatting/LICENSE'];
+const files = ['index.html', 'styles.css', 'app.mjs', 'world.mjs', 'portfolio.mjs', 'unity-demo.mjs', 'unity-player.html', 'assets/room.glb', 'assets/uncap.png', 'assets/fastpop.png', 'assets/pachipachi.png', 'assets/questionmark.png', 'assets/fonts/Galmuri11.woff2', 'assets/fonts/PressStart2P-Regular.ttf', 'assets/fonts/OFL-Galmuri.txt', 'vendor/texel-splatting/LICENSE'];
 const ownModules = ['app.mjs', 'world.mjs', 'portfolio.mjs', 'outline.mjs', 'mood-light.mjs', 'exterior.mjs', 'backdrop.mjs', 'city-layout.mjs', 'texel-splat.mjs', 'seoul-weather.mjs', 'weather-sky.mjs', 'sunset.mjs', 'street-life.mjs', 'server.mjs', 'scripts/vendor.mjs', 'scripts/check-texel-webgl.mjs', 'scripts/check-weather-webgl.mjs', 'scripts/check-street-life.mjs', 'scripts/check-park-layout.mjs', 'scripts/check-celestial-sky.mjs', 'scripts/check-sky-performance.mjs', 'scripts/check-sunset-colors.mjs'];
+ownModules.push('unity-demo.mjs', 'scripts/check-unity-demo.mjs');
 ownModules.push('seoul-traffic.mjs', 'traffic-proxy.mjs', 'traffic-flow.mjs', 'precipitation.mjs', 'static-batch.mjs', 'ceiling-light.mjs', 'review-mode.mjs', 'scripts/check-completion.mjs', 'scripts/check-resilience.mjs', 'scripts/check-static-origin.mjs', 'scripts/verify-site.mjs', 'scripts/check-review-mode.mjs');
 ownModules.push('scripts/check-portfolio-detail.mjs');
 ownModules.push('scripts/check-interaction-controls.mjs');

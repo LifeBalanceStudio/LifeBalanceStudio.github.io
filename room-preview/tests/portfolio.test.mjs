@@ -4,6 +4,30 @@ import { createTVMenu, games } from '../portfolio.mjs';
 
 const canvas = () => ({ width: 768, height: 720, getContext: () => ({ setTransform() {}, save() {}, restore() {}, translate() {}, scale() {}, fillRect() {}, fillText() {}, measureText(text) { return { width: text.length * 8 }; } }) });
 
+test('FastPop 상세의 페이지 전환과 데모를 키보드 및 화면 선택으로 실행한다', () => {
+  const played = [];
+  const menu = createTVMenu(canvas(), () => {}, games, () => {}, game => played.push(game.title));
+  menu.setActive(true);
+  menu.choose(); menu.select(1); menu.choose();
+  menu.choose();
+  assert.equal(menu.detailPage, 1);
+  assert.equal(played.length, 0);
+  menu.select(1); menu.choose();
+  assert.deepEqual(played, ['Fast Pop!!']);
+  assert.equal(menu.detailPage, 1);
+  assert.equal(menu.detailAction, 1);
+  assert.equal(menu.hit(132 / 256, 205 / 240), true);
+  assert.equal(played.length, 2);
+  menu.hit(132 / 256, 190 / 240);
+  assert.equal(menu.detailPage, 0);
+  menu.back(); menu.select(-1); menu.choose();
+  assert.equal(menu.current.title, 'Uncap');
+  assert.equal(menu.hit(132 / 256, 205 / 240), false);
+  assert.equal(played.length, 2);
+  menu.setActive(false); menu.choose();
+  assert.equal(played.length, 2);
+});
+
 test('페이지 선택부터 게임 설명까지 세 단계로 이동하고 역순으로 돌아온다', () => {
   const menu = createTVMenu(canvas(), () => {});
   menu.setActive(true);
