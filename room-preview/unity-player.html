@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FastPop 데모</title>
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; }
+    canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" width="600" height="960" tabindex="0" aria-label="FastPop 게임 화면"></canvas>
+  <script>
+    const canvas = document.querySelector('canvas');
+    let instance = null;
+    const report = (type, extra = {}) => parent.postMessage({ type, ...extra }, location.origin);
+    const fail = error => { console.error(error); report('demo-error'); };
+    addEventListener('error', event => fail(event.message));
+    addEventListener('unhandledrejection', event => fail(event.reason));
+    addEventListener('keydown', event => {
+      if (event.code === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        report('demo-exit');
+      }
+    }, true);
+    addEventListener('message', async event => {
+      if (event.origin !== location.origin || event.source !== parent || event.data?.type !== 'demo-quit') return;
+      try { if (instance) await instance.Quit(); }
+      finally { instance = null; report('demo-closed'); }
+    });
+    const build = '../games/fastpop_webgl/Build/fastpop_webgl';
+    const loader = document.createElement('script');
+    loader.src = build + '.loader.js';
+    loader.onerror = () => fail('게임 로더를 가져오지 못했습니다.');
+    loader.onload = async () => {
+      try {
+        instance = await createUnityInstance(canvas, {
+          dataUrl: build + '.data.unityweb',
+          frameworkUrl: build + '.framework.js.unityweb',
+          codeUrl: build + '.wasm.unityweb',
+          streamingAssetsUrl: '../games/fastpop_webgl/StreamingAssets',
+          companyName: 'LifeBalance', productName: 'FastPop', productVersion: '1.0.4',
+          matchWebGLToCanvasSize: false,
+          showBanner: (message, type) => { if (type === 'error') fail(message); }
+        }, progress => report('demo-progress', { progress }));
+        canvas.focus();
+        report('demo-ready');
+      } catch (error) { fail(error); }
+    };
+    document.head.append(loader);
+  </script>
+</body>
+</html>

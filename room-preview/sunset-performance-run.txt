@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "before": {
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 (0x00002216) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "timer": true,
+      "texelSupported": true,
+      "width": 1280,
+      "height": 800,
+      "dpr": 1,
+      "timeUpdateMs": 0.02599999999627471,
+      "skyMeshes": 1,
+      "skyTriangles": 528
+    },
+    "after": {
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 (0x00002216) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "timer": true,
+      "texelSupported": true,
+      "width": 1280,
+      "height": 800,
+      "dpr": 1,
+      "timeUpdateMs": 0.03800000000745058,
+      "skyMeshes": 1,
+      "skyTriangles": 528
+    }
+  },
+  "cases": [
+    {
+      "night": false,
+      "texel": false,
+      "before": {
+        "median": 2.899999998509884,
+        "p95": 3.400000002235174,
+        "samples": 80
+      },
+      "after": {
+        "median": 2.899999998509884,
+        "p95": 3.399999998509884,
+        "samples": 80
+      },
+      "wallDeltaMs": 0,
+      "gpuDeltaMs": 0.012287999999999966,
+      "drawDelta": 0
+    },
+    {
+      "night": false,
+      "texel": true,
+      "before": {
+        "median": 7.300000000745058,
+        "p95": 7.600000001490116,
+        "samples": 80
+      },
+      "after": {
+        "median": 7.300000000745058,
+        "p95": 7.600000001490116,
+        "samples": 80
+      },
+      "wallDeltaMs": 0,
+      "gpuDeltaMs": 0.1085440000000002,
+      "drawDelta": 0
+    },
+    {
+      "night": true,
+      "texel": false,
+      "before": {
+        "median": 2.800000000745058,
+        "p95": 3.099999997764826,
+        "samples": 80
+      },
+      "after": {
+        "median": 2.800000000745058,
+        "p95": 3,
+        "samples": 80
+      },
+      "wallDeltaMs": 0,
+      "gpuDeltaMs": -0.0030719999999999636,
+      "drawDelta": 0
+    },
+    {
+      "night": true,
+      "texel": true,
+      "before": {
+        "median": 7.199999999254942,
+        "p95": 7.600000001490116,
+        "samples": 80
+      },
+      "after": {
+        "median": 7.200000002980232,
+        "p95": 7.599999997764826,
+        "samples": 80
+      },
+      "wallDeltaMs": 3.725290298461914e-9,
+      "gpuDeltaMs": 0.01331199999999999,
+      "drawDelta": 0
+    }
+  ],
+  "images": [
+    "room-before.png",
+    "room-sunset.png",
+    "room-sunset-texel.png",
+    "room-afterglow.png",
+    "room-overcast.png",
+    "room-night.png"
+  ],
+  "errors": []
+}

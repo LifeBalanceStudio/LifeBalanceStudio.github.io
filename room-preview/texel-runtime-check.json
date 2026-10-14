@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-09-11T18:15:45.201Z",
+  "viewport": [
+    1280,
+    800
+  ],
+  "cases": [
+    {
+      "path": "/?render=original",
+      "status": 200,
+      "timing": {
+        "medianMs": 8.300000000000182,
+        "p95Ms": 8.400000000000091,
+        "maxMs": 8.400000000000091,
+        "framesOver34ms": 0
+      }
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "timing": {
+        "medianMs": 8.300000000000182,
+        "p95Ms": 8.400000000000091,
+        "maxMs": 8.400000000000091,
+        "framesOver34ms": 0
+      }
+    }
+  ],
+  "errors": [],
+  "badResponses": []
+}

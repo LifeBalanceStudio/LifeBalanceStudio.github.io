@@ -1,0 +1,118 @@
+{
+  "metadata": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 (0x00002216) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "timer": true,
+    "width": 1280,
+    "height": 800,
+    "dpr": 1
+  },
+  "updateMs": 0.006899999998509884,
+  "triangles": 2880,
+  "meshGroups": 5,
+  "cases": [
+    {
+      "view": "window",
+      "texel": false,
+      "baseline": {
+        "median": 2.7999999970197678,
+        "p95": 3.300000000745058,
+        "samples": 80
+      },
+      "actors": {
+        "median": 2.7000000029802322,
+        "p95": 3,
+        "samples": 80
+      },
+      "gpuDeltaMs": 0.05427199999999999,
+      "wallDeltaMs": -0.09999999403953552,
+      "pairedWallDeltas": [
+        -0.3999999985098839,
+        0,
+        3.725290298461914e-9,
+        0.09999999776482582,
+        0
+      ],
+      "drawDelta": 10
+    },
+    {
+      "view": "window",
+      "texel": true,
+      "baseline": {
+        "median": 8.399999998509884,
+        "p95": 9.300000000745058,
+        "samples": 80
+      },
+      "actors": {
+        "median": 8.5,
+        "p95": 9.400000002235174,
+        "samples": 80
+      },
+      "gpuDeltaMs": 0.011264000000000607,
+      "wallDeltaMs": 0.10000000149011612,
+      "pairedWallDeltas": [
+        -0.09999999776482582,
+        0.30000000074505806,
+        0.10000000149011612,
+        0.09999999776482582,
+        0.10000000149011612
+      ],
+      "drawDelta": 55
+    },
+    {
+      "view": "room",
+      "texel": false,
+      "baseline": {
+        "median": 3.400000002235174,
+        "p95": 3.600000001490116,
+        "samples": 80
+      },
+      "actors": {
+        "median": 3.5,
+        "p95": 3.800000000745058,
+        "samples": 80
+      },
+      "gpuDeltaMs": 0.10547200000000001,
+      "wallDeltaMs": 0.09999999776482582,
+      "pairedWallDeltas": [
+        0.20000000298023224,
+        -3.725290298461914e-9,
+        0.10000000149011612,
+        0.09999999776482582,
+        0.09999999776482582
+      ],
+      "drawDelta": 10
+    },
+    {
+      "view": "room",
+      "texel": true,
+      "baseline": {
+        "median": 8.700000002980232,
+        "p95": 9.200000002980232,
+        "samples": 80
+      },
+      "actors": {
+        "median": 8.800000000745058,
+        "p95": 9.199999999254942,
+        "samples": 80
+      },
+      "gpuDeltaMs": 0.13926399999999894,
+      "wallDeltaMs": 0.09999999776482582,
+      "pairedWallDeltas": [
+        0,
+        0.30000000074505806,
+        -0.10000000521540642,
+        0.30000000074505806,
+        -3.725290298461914e-9
+      ],
+      "drawDelta": 55
+    }
+  ],
+  "frames": [
+    "day.png",
+    "day-texel.png",
+    "night.png",
+    "night-texel.png",
+    "models.png"
+  ],
+  "errors": []
+}

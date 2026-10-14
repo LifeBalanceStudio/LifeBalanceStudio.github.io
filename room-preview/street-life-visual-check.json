@@ -1,0 +1,21 @@
+{
+  "metadata": {
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 (0x00002216) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "timer": true,
+    "width": 1280,
+    "height": 800,
+    "dpr": 1
+  },
+  "updateMs": 0.006949999999254942,
+  "triangles": 2880,
+  "meshGroups": 5,
+  "cases": [],
+  "frames": [
+    "day.png",
+    "day-texel.png",
+    "night.png",
+    "night-texel.png",
+    "models.png"
+  ],
+  "errors": []
+}

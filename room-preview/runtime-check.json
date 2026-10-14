@@ -1,0 +1,28 @@
+{
+  "검사": "화면 캡처·DOM 검사·클릭 없이 실제 페이지의 그래픽 오류와 예외만 수집",
+  "브라우저": "152.0.7977.84",
+  "수정전": {
+    "전체이벤트": 259,
+    "텍스처오류": 256,
+    "대표오류": "[.WebGL-0x632c00181400] GL_INVALID_OPERATION: glDrawElements: Mismatch between texture format and sampler type (signed/unsigned/float/shadow)."
+  },
+  "수정후": [
+    {
+      "서울시각": "12시",
+      "그래픽오류": [],
+      "기타": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        }
+      ],
+      "요청실패": []
+    },
+    {
+      "서울시각": "21시",
+      "그래픽오류": [],
+      "기타": [],
+      "요청실패": []
+    }
+  ]
+}

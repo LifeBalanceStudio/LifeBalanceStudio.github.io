@@ -1,0 +1,22 @@
+[
+  {
+    "file": "room-preview/texel-splat.mjs",
+    "same": true
+  },
+  {
+    "file": "room-preview/assets/room.glb",
+    "same": true
+  },
+  {
+    "file": "room-preview/app.mjs",
+    "same": true
+  },
+  {
+    "file": "room-preview/weather-sky.mjs",
+    "same": true
+  },
+  {
+    "file": "room-preview/seoul-weather.mjs",
+    "same": true
+  }
+]
